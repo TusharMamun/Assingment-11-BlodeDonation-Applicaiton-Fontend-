@@ -1,0 +1,51 @@
+# =========================
+# Ignore specific JSX files
+# =========================
+
+# Auth components
+src/Authcomponents/LoginPage/Login.jsx
+src/Authcomponents/Profile/Profile.jsx
+src/Authcomponents/Profile/UpdateProfile.jsx
+src/components/
+
+src/pages
+src/firbase
+# Auth provider / context
+# src/Authcomponents/providers/AuthContext.jsx
+# src/Authcomponents/providers/AuthProvider.jsx
+
+# # Registration
+# src/Authcomponents/RegisterPage/Regestration.jsx
+
+# # Layout & Dashboard
+# src/components/layout/MainLayout.jsx
+# src/components/DashboardPages/DashboardHome.jsx
+# src/components/DashboardLayout/DashBoard.jsx
+
+# # Common components
+# src/components/Loading.jsx
+# src/components/StartedCard.jsx
+
+# # Hooks
+# src/Hooks/useAuth.jsx
+# src/Hooks/useAxiosSecure.jsx
+# src/Hooks/useUserRole.jsx
+
+# # About page
+# src/Pages/AboutPage/About.jsx
+
+# # Dashboard pages
+# src/Pages/DashboardPages/AllDonerRequestes.jsx
+# src/Pages/DashboardPages/AllUser.jsx
+# src/Pages/DashboardPages/CreateDonationRequest.jsx
+# src/Pages/DashboardPages/DonationRequestDetails.jsx
+# src/Pages/DashboardPages/DonationRequest.jsx
+# src/Pages/DashboardPages/MyDonationPage.jsx
+# src/Pages/DashboardPages/UpdateRequest.jsx
+
+# =========================
+# Also ignore env & build
+# =========================
+.env
+node_modules/
+dist/
