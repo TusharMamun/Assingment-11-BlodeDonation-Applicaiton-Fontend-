@@ -3,10 +3,11 @@
 # =========================
 
 # Auth components
-src/Authcomponents/LoginPage/Login.jsx
 
 
-src/components/
+
+src/components/layout/DashboardPages
+src/components/layout/DashbordLayout
 
 src/pages
 
