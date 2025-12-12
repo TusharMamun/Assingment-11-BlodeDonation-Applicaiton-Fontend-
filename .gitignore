@@ -4,12 +4,12 @@
 
 # Auth components
 src/Authcomponents/LoginPage/Login.jsx
-src/Authcomponents/Profile/Profile.jsx
-src/Authcomponents/Profile/UpdateProfile.jsx
+
+
 src/components/
 
 src/pages
-src/firbase
+
 # Auth provider / context
 # src/Authcomponents/providers/AuthContext.jsx
 # src/Authcomponents/providers/AuthProvider.jsx
