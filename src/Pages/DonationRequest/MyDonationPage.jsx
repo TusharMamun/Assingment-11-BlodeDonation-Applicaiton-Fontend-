@@ -1,32 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
-import {
-  FiSearch,
-  FiTrash2,
-  FiFilter,
-  FiChevronLeft,
-  FiChevronRight,
-} from "react-icons/fi";
+import { FiTrash2, FiChevronLeft, FiChevronRight, FiEye, FiEdit } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import useAuth from "../../Hooks/useAuth";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 
 const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
 const normalizeResponse = (payload, fallbackPage, fallbackLimit) => {
-  // If backend returns array
   if (Array.isArray(payload)) {
     const total = payload.length;
-    return {
-      result: payload,
-      total,
-      page: 1,
-      limit: total || fallbackLimit,
-      totalPages: 1,
-    };
+    return { result: payload, total, page: 1, limit: total || fallbackLimit, totalPages: 1 };
   }
 
-  // If backend returns {result,total,page,limit,totalPages}
   const result = Array.isArray(payload?.result) ? payload.result : [];
   const total = Number.isFinite(payload?.total) ? payload.total : 0;
   const page = Number.isFinite(payload?.page) ? payload.page : fallbackPage;
@@ -40,30 +27,28 @@ const normalizeResponse = (payload, fallbackPage, fallbackLimit) => {
   return { result, total, page, limit, totalPages };
 };
 
+const badgeClass = (status) => {
+  const st = String(status || "").toLowerCase();
+  if (st === "pending") return "badge badge-warning badge-outline";
+  if (st === "inprogress") return "badge badge-info badge-outline";
+  if (st === "done") return "badge badge-success badge-outline";
+  if (st === "canceled" || st === "cancelled") return "badge badge-error badge-outline";
+  return "badge badge-ghost badge-outline";
+};
+
 const MyDonationRequests = () => {
   const { user, loading } = useAuth();
   const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-
-  // pagination
+  const [status, setStatus] = useState("pending");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  // reset to page 1 when filter/search/limit changes
-  useEffect(() => {
-    setPage(1);
-  }, [status, search, limit]);
+  useEffect(() => setPage(1), [status, search, limit]);
 
-  const {
-    data: normalized,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
+  const { data: normalized, isLoading, isError, error, refetch, isFetching } = useQuery({
     enabled: !loading && !!user?.email,
     queryKey: ["myDonationRequests", user?.email, status, search, page, limit],
     queryFn: async () => {
@@ -72,21 +57,19 @@ const MyDonationRequests = () => {
       });
       return normalizeResponse(res.data, page, limit);
     },
-    keepPreviousData: true, // for react-query v4
+    keepPreviousData: true,
   });
 
   const rows = normalized?.result || [];
   const total = normalized?.total ?? 0;
   const totalPages = normalized?.totalPages ?? 1;
 
-  // ✅ Ensure local page never exceeds totalPages (important after search/filter)
   useEffect(() => {
     if (!normalized) return;
     const safe = clamp(page, 1, totalPages);
-    if (safe !== page);
+    if (safe !== page) setPage(safe);
   }, [normalized, page, totalPages]);
 
-  // page buttons
   const pageButtons = useMemo(() => {
     const pages = [];
     const add = (p) => pages.push(p);
@@ -109,10 +92,10 @@ const MyDonationRequests = () => {
     return pages;
   }, [page, totalPages]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (reqId) => {
     const confirm = await Swal.fire({
       title: "Delete this request?",
-      text: "This action cannot be undone.",
+      text: "Only pending requests can be deleted.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete",
@@ -122,7 +105,9 @@ const MyDonationRequests = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axiosSecure.delete(`/my-blood-donation-requests/${id}`);
+      await axiosSecure.delete(`/my-blood-donation-requests/${reqId}`, {
+        params: { email: user.email },
+      });
 
       await Swal.fire({
         icon: "success",
@@ -131,12 +116,8 @@ const MyDonationRequests = () => {
         showConfirmButton: false,
       });
 
-      // If last item on current page deleted -> go back a page
-      if (rows.length === 1 && page > 1) {
-        setPage((p) => p - 1);
-      } else {
-        refetch();
-      }
+      if (rows.length === 1 && page > 1) setPage((p) => p - 1);
+      else refetch();
     } catch (err) {
       Swal.fire(
         "Failed!",
@@ -153,205 +134,193 @@ const MyDonationRequests = () => {
   const to = Math.min(page * limit, total);
 
   return (
-    <div className="w-full">
-      {/* Header */}
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="p-4 sm:p-6">
+      <div className="mb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">
-            My Donation Requests
-          </h1>
+          <h2 className="text-2xl font-extrabold text-slate-900">My Donation Requests</h2>
           <p className="text-sm text-slate-500">
-            Requests by: <span className="font-semibold">{user?.email}</span>
+            Showing {from}-{to} of {total} {isFetching ? " • Updating..." : ""}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-slate-700">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-            <FiFilter className="h-5 w-5" />
-          </span>
-          <div className="leading-tight">
-            <p className="font-semibold">Requests</p>
-            <p className="text-xs text-slate-500">
-              {isFetching ? "Updating..." : `Showing ${from}-${to} of ${total}`}
-            </p>
-          </div>
+        <div className="flex gap-2">
+          <button onClick={() => refetch()} className="btn btn-outline btn-sm rounded-xl">
+            Refresh
+          </button>
+          <button
+            onClick={() => {
+              setSearch("");
+              setStatus("pending");
+              setPage(1);
+              setLimit(10);
+            }}
+            className="btn btn-outline btn-sm rounded-xl"
+          >
+            Reset
+          </button>
         </div>
       </div>
 
-      {/* Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        {/* Toolbar */}
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-slate-700">
-            <p className="font-semibold">Requests Table</p>
-            <p className="text-xs text-slate-500">
-              Page {page} of {totalPages}
-            </p>
-          </div>
+      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input
+          className="input input-bordered rounded-xl bg-white"
+          placeholder="Search recipient / hospital / district / blood..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            {/* Status Filter */}
-            <div className="join">
-              {["all", "pending", "inprogress", "done", "canceled"].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`btn btn-sm join-item ${
-                    status === s ? "btn-primary" : "btn-outline"
-                  }`}
-                  onClick={() => setStatus(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+        <select
+          className="select select-bordered rounded-xl bg-white"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="pending">Status: pending</option>
+          <option value="inprogress">Status: inprogress</option>
+          <option value="done">Status: done</option>
+          <option value="canceled">Status: canceled</option>
+        </select>
 
-            {/* Search */}
-            <label className="input input-bordered input-sm flex items-center gap-2 w-full sm:w-80">
-              <FiSearch className="opacity-60" />
-              <input
-                type="text"
-                className="grow"
-                placeholder="Search recipient / hospital / address / blood / status"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </label>
+        <select
+          className="select select-bordered rounded-xl bg-white"
+          value={limit}
+          onChange={(e) => setLimit(Number(e.target.value))}
+        >
+          {[5, 10, 20, 50].map((n) => (
+            <option key={n} value={n}>
+              {n} / page
+            </option>
+          ))}
+        </select>
+      </div>
 
-            {/* Page size */}
-            <select
-              className="select select-bordered select-sm"
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-            >
-              {[5, 10, 20, 50].map((n) => (
-                <option key={n} value={n}>
-                  {n}/page
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <div className="rounded-2xl border bg-white shadow-sm overflow-x-auto">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Recipient</th>
+              <th>Location</th>
+              <th>Blood</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th className="text-right">Action</th>
+            </tr>
+          </thead>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr className="text-slate-600">
-                <th>Recipient</th>
-                <th>Blood</th>
-                <th>Hospital</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th className="text-right">Created</th>
-                <th className="text-right">Action</th>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-10 text-center text-slate-500">
+                  No donation requests found.
+                </td>
               </tr>
-            </thead>
+            ) : (
+              rows.map((r) => {
+                const st = String(r?.status || "").toLowerCase() === "cancelled" ? "canceled" : String(r?.status || "").toLowerCase();
+                const isPending = st === "pending";
 
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-500">
-                    No donation requests found.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r) => (
+                return (
                   <tr key={r._id} className="hover">
-                    <td className="font-semibold text-slate-800">
-                      {r.recipientName || "—"}
-                      <div className="text-xs text-slate-500">
-                        Requested by: {r.requesterName || "—"} (
-                        {r.requesterEmail || "—"})
+                    <td>
+                      <div className="leading-tight">
+                        <div className="font-bold text-slate-900">{r.recipientName || "—"}</div>
+                        <div className="text-xs text-slate-500">{r.hospitalName || "—"}</div>
                       </div>
                     </td>
 
                     <td>
-                      <span className="badge badge-outline">
-                        {r.bloodGroup || "—"}
-                      </span>
+                      {[r.recipientUpazila, r.recipientDistrict].filter(Boolean).join(", ") || "—"}
                     </td>
 
-                    <td className="text-slate-700">{r.hospitalName || "—"}</td>
-
-                    <td className="text-slate-700">
-                      {[r.recipientUpazila, r.recipientDistrict, r.fullAddress]
-                        .filter(Boolean)
-                        .join(", ") || "—"}
-                    </td>
+                    <td className="font-bold">{r.bloodGroup || "—"}</td>
+                    <td>{r.donationDate || "—"}</td>
+                    <td>{r.donationTime || "—"}</td>
 
                     <td>
-                      <span className="badge badge-outline">{r.status || "—"}</span>
-                    </td>
-
-                    <td className="text-right text-slate-600">
-                      {r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}
+                      <span className={badgeClass(st)}>{st}</span>
                     </td>
 
                     <td className="text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(r._id)}
-                        className="btn btn-error btn-sm rounded-xl gap-2"
-                      >
-                        <FiTrash2 /> Delete
-                      </button>
+                      <div className="flex flex-wrap gap-2 justify-end">
+                        {/* ✅ Always show View */}
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/donation-requests/${r._id}`)}
+                          className="btn btn-outline btn-sm rounded-xl gap-2"
+                        >
+                          <FiEye /> View
+                        </button>
+
+                        {/* ✅ Only pending: Edit + Delete */}
+                        {isPending && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/updateDonation/${r._id}`)}
+                              className="btn btn-outline btn-sm rounded-xl gap-2"
+                            >
+                              <FiEdit /> Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(r._id)}
+                              className="btn btn-error btn-sm rounded-xl gap-2"
+                            >
+                              <FiTrash2 /> Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="text-sm text-slate-500">
+          Page <b className="text-slate-900">{page}</b> of{" "}
+          <b className="text-slate-900">{totalPages}</b>
         </div>
-{/* fka;fka;fka; */}
-        {/* Pagination Footer */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200 p-4">
-          <div className="text-sm text-slate-600">
-            Showing <span className="font-semibold">{from}</span> to{" "}
-            <span className="font-semibold">{to}</span> of{" "}
-            <span className="font-semibold">{total}</span> results
+
+        <div className="flex items-center justify-end gap-2">
+          <button
+            className="btn btn-sm btn-outline rounded-xl"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            <FiChevronLeft /> Prev
+          </button>
+
+          <div className="join">
+            {pageButtons.map((p, idx) =>
+              p === "..." ? (
+                <button key={`${p}-${idx}`} className="btn btn-sm join-item btn-disabled">
+                  ...
+                </button>
+              ) : (
+                <button
+                  key={p}
+                  className={`btn btn-sm join-item ${page === p ? "btn-primary" : "btn-outline"}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              )
+            )}
           </div>
 
-          <div className="flex items-center gap-2 justify-end">
-            <button
-              className="btn btn-sm btn-outline"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              <FiChevronLeft /> Prev
-            </button>
-
-            <div className="join">
-              {pageButtons.map((p, idx) =>
-                p === "..." ? (
-                  <button
-                    key={`${p}-${idx}`}
-                    className="btn btn-sm join-item btn-disabled"
-                  >
-                    ...
-                  </button>
-                ) : (
-                  <button
-                    key={p}
-                    className={`btn btn-sm join-item ${
-                      page === p ? "btn-primary" : "btn-outline"
-                    }`}
-                    onClick={() => setPage(p)}
-                  >
-                    {p}
-                  </button>
-                )
-              )}
-            </div>
-
-            <button
-              className="btn btn-sm btn-outline"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next <FiChevronRight />
-            </button>
-          </div>
+          <button
+            className="btn btn-sm btn-outline rounded-xl"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next <FiChevronRight />
+          </button>
         </div>
       </div>
     </div>

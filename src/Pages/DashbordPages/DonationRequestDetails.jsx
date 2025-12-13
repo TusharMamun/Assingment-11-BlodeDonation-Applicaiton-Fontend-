@@ -5,80 +5,81 @@ import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import Swal from "sweetalert2";
 
-const  DonationRequestDetails=()=> {
+const DonationRequestDetails = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-const axiosSecure =useAxiosSecure()
- const navigate = useNavigate();
+  const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate();
 
-const handleInProgress = async (id) => {
-  try {
-    const res = await axiosSecure.patch(`/update-status/${id}`, {
-      status: "inprogress",
-    });
+  const { data: request, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["donationRequestDetails", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const res = await axiosSecure.get(`/blood-donation-requests-details/${id}`);
+      return res.data;
+    },
+  });
 
-    const modifiedCount =
-      res?.data?.modifiedCount ?? res?.data?.result?.modifiedCount ?? 0;
-
-    if (modifiedCount === 1) {
-      await Swal.fire({
-        icon: "success",
-        title: "Thank you for donating blood ❤️",
-        text: "Your donation has been booked successfully.",
-        timer: 1400,
-        showConfirmButton: false,
+  const handleInProgress = async (reqId) => {
+    try {
+      const res = await axiosSecure.patch(`/update-status/${reqId}`, {
+        status: "inprogress",
+        donorName: user?.displayName || user?.name || "Donor",
+        donorEmail: user?.email,
       });
 
-      setOpen(false);
-  
-      navigate("/donation-requests"); // 
-    } else {
+      const modifiedCount =
+        res?.data?.modifiedCount ?? res?.data?.result?.modifiedCount ?? 0;
+
+      if (modifiedCount === 1) {
+        await Swal.fire({
+          icon: "success",
+          title: "Thank you for donating blood ❤️",
+          text: "Your donation has been booked successfully.",
+          timer: 1400,
+          showConfirmButton: false,
+        });
+
+        setOpen(false);
+        await refetch();
+        navigate("/donation-requests");
+      } else {
+        await Swal.fire({
+          icon: "error",
+          title: "Sorry 😔",
+          text: "Your donation was not booked. Please try again.",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (err) {
       await Swal.fire({
         icon: "error",
         title: "Sorry 😔",
-        text: "Your donation was not booked. Please try again.",
+        text:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Your donation was not booked. Please try again.",
         confirmButtonText: "OK",
       });
     }
-  } catch (err) {
-    await Swal.fire({
-      icon: "error",
-      title: "Sorry 😔",
-      text:
-        err?.response?.data?.message ||
-        err?.message ||
-        "Your donation was not booked. Please try again.",
-      confirmButtonText: "OK",
-    });
-  }
-};
-
-
-
-  // Replace this with real data later
-
-
-const { data: request, isLoading,refetch } = useQuery({
-  queryKey: ["donationRequestDetails", id],
-  enabled: !!id,
-  queryFn: async () => {
-    refetch()
-    const res = await axiosSecure.get(`/blood-donation-requests-details/${id}`);
-    return res.data;
-  },
-});
-
-  if (isLoading) return <div>Loading...</div>;
+  };
 
   const badgeClass = (s) => {
-    if (s === "pending") return "badge badge-warning badge-outline";
-    if (s === "approved") return "badge badge-success badge-outline";
-    if (s === "done") return "badge badge-info badge-outline";
-    if (s === "cancelled") return "badge badge-error badge-outline";
-    if (s === "inprogress") return "badge badge-primary badge-outline";
-    return "badge badge-ghost";
+    const status = String(s || "").toLowerCase();
+    if (status === "pending") return "badge badge-warning badge-outline";
+    if (status === "inprogress") return "badge badge-primary badge-outline";
+    if (status === "done") return "badge badge-success badge-outline";
+    if (status === "canceled" || status === "cancelled")
+      return "badge badge-error badge-outline";
+    return "badge badge-ghost badge-outline";
   };
+
+  if (isLoading) return <div className="p-6">Loading...</div>;
+  if (isError) return <div className="p-6">Error: {error?.message}</div>;
+  if (!request) return <div className="p-6">No request found.</div>;
+
+  const st = String(request?.status || "").toLowerCase();
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto">
@@ -94,10 +95,14 @@ const { data: request, isLoading,refetch } = useQuery({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className={badgeClass(request.status)}>
-            {/* {request.status} */}
-          </span>
-          <button  onClick={() => navigate(-1)} className="btn btn-outline btn-sm rounded-xl" type="button">
+          {/* ✅ STATUS IS NOW VISIBLE */}
+          <span className={badgeClass(st)}>{(st || "—").toUpperCase()}</span>
+
+          <button
+            onClick={() => navigate(-1)}
+            className="btn btn-outline btn-sm rounded-xl"
+            type="button"
+          >
             Back
           </button>
         </div>
@@ -118,7 +123,9 @@ const { data: request, isLoading,refetch } = useQuery({
             <Info label="Recipient Name" value={request.recipientName} />
             <Info
               label="District / Upazila"
-              value={`${request.recipientDistrict}, ${request.recipientUpazila}`}
+              value={`${request.recipientDistrict || "—"}, ${
+                request.recipientUpazila || "—"
+              }`}
             />
 
             <Info label="Hospital Name" value={request.hospitalName} />
@@ -137,24 +144,27 @@ const { data: request, isLoading,refetch } = useQuery({
             <p className="text-xs text-slate-500">
               Created:{" "}
               <span className="font-semibold text-slate-700">
-                {new Date(request.createdAt).toLocaleString()}
+                {request?.createdAt
+                  ? new Date(request.createdAt).toLocaleString()
+                  : "—"}
               </span>
             </p>
 
-      {request.status === "pending" && (
-  <button
-    className="btn btn-primary rounded-xl"
-    type="button"
-    onClick={() => setOpen(true)}
-    disabled={!user?.email}
-    title={!user?.email ? "Login required" : ""}
-  >
-    Donate
-  </button>
-)}
+            {/* ✅ Donate button only on pending */}
+            {st === "pending" && (
+              <button
+                className="btn btn-primary rounded-xl"
+                type="button"
+                onClick={() => setOpen(true)}
+                disabled={!user?.email}
+                title={!user?.email ? "Login required" : ""}
+              >
+                Donate
+              </button>
+            )}
           </div>
 
-          {!user?.email && (
+          {!user?.email && st === "pending" && (
             <p className="mt-2 text-xs text-red-600">
               Please login to confirm donation.
             </p>
@@ -168,15 +178,20 @@ const { data: request, isLoading,refetch } = useQuery({
           </h3>
 
           <div className="mt-4 space-y-3 text-sm">
-            {/* <SummaryRow label="Status" value={request.status} /> */}
+            {/* ✅ show status here too */}
+            <SummaryRow label="Status" value={(st || "—").toUpperCase()} />
             <SummaryRow label="Blood Group" value={request.bloodGroup} />
             <SummaryRow
               label="When"
-              value={`${request.donationDate} • ${request.donationTime}`}
+              value={`${request.donationDate || "—"} • ${
+                request.donationTime || "—"
+              }`}
             />
             <SummaryRow
               label="Where"
-              value={`${request.recipientDistrict}, ${request.recipientUpazila}`}
+              value={`${request.recipientDistrict || "—"}, ${
+                request.recipientUpazila || "—"
+              }`}
             />
             <SummaryRow label="Hospital" value={request.hospitalName} />
           </div>
@@ -199,7 +214,8 @@ const { data: request, isLoading,refetch } = useQuery({
                   Confirm Donation
                 </h3>
                 <p className="text-sm text-slate-500">
-                  This will change status from <b>pending</b> to <b>inprogress</b>.
+                  This will change status from <b>pending</b> to{" "}
+                  <b>inprogress</b>.
                 </p>
               </div>
 
@@ -246,7 +262,8 @@ const { data: request, isLoading,refetch } = useQuery({
                 <button
                   className="btn btn-primary rounded-xl"
                   type="button"
-              onClick={()=>{handleInProgress(request._id)}}
+                  onClick={() => handleInProgress(request._id)}
+                  disabled={!user?.email}
                 >
                   Confirm
                 </button>
@@ -257,7 +274,7 @@ const { data: request, isLoading,refetch } = useQuery({
       )}
     </div>
   );
-}
+};
 
 function Info({ label, value }) {
   return (
@@ -280,4 +297,5 @@ function SummaryRow({ label, value }) {
     </div>
   );
 }
-export default DonationRequestDetails
+
+export default DonationRequestDetails;

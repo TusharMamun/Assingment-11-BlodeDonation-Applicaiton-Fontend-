@@ -1,27 +1,47 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import Swal from "sweetalert2";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
+import useUserRole from "../../Hooks/useUserRole";
 
 const STATUSES = ["", "inprogress", "pending", "approved", "done", "cancelled"];
-
 const BLOOD = ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const AllDonerRequestes = () => {
   const axiosSecure = useAxiosSecure();
+  const [myRole, roleLoading] = useUserRole(); // "admin" | "volunteer" | "donor"
+  const isVolunteer = myRole === "volunteer";
+  const isAdmin = myRole === "admin";
 
   const [status, setStatus] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
+
+  // ✅ debounce search
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const params = useMemo(
-    () => ({ status, bloodGroup, search, page, limit }),
-    [status, bloodGroup, search, page]
+    () => ({ status, bloodGroup, search: debouncedSearch, page, limit }),
+    [status, bloodGroup, debouncedSearch, page]
   );
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    enabled: !roleLoading, // wait role
     queryKey: ["blood-donation-requests", params],
     queryFn: async () => {
       const res = await axiosSecure.get("/blood-donation-requests", { params });
@@ -30,22 +50,32 @@ const AllDonerRequestes = () => {
     keepPreviousData: true,
   });
 
-  // optional: update status from table dropdown dfafafdfd fdafafa
-const statusMutation = useMutation({ 
-  mutationFn: ({ id, status }) =>
-    axiosSecure.patch(`/blood-donation-requests/${id}/status`, { status }),
-  onSuccess: () => refetch(),
-});
-
   const list = data?.result || [];
   const totalPages = data?.totalPages || 1;
 
-  const badgeClass = (s) => {
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }) => {
+      const res = await axiosSecure.patch(`/blood-donation-requests/${id}/status`, { status });
+      return res.data;
+    },
+    onSuccess: () => {
+      Swal.fire({ icon: "success", title: "Status updated!", timer: 1000, showConfirmButton: false });
+      refetch();
+    },
+    onError: (err) => {
+      Swal.fire(
+        "Failed!",
+        err?.response?.data?.message || err?.message || "Status update failed",
+        "error"
+      );
+    },
+  });
 
+  const badgeClass = (s) => {
     if (s === "done") return "badge badge-info badge-outline";
     if (s === "cancelled") return "badge badge-error badge-outline";
-   
-   
+    if (s === "approved") return "badge badge-success badge-outline";
+    if (s === "pending") return "badge badge-warning badge-outline";
     return "badge badge-ghost";
   };
 
@@ -55,20 +85,29 @@ const statusMutation = useMutation({
     setSearch("");
     setPage(1);
   };
- refetch()
-  if (isLoading) return <div className="p-10 text-center text-slate-500">Loading...</div>;
-  if (isError) return <div className="p-10 text-center text-red-600">Error: {error?.message}</div>;
+
+  if (roleLoading || isLoading) {
+    return <div className="p-10 text-center text-slate-500">Loading...</div>;
+  }
+  if (isError) {
+    return (
+      <div className="p-10 text-center text-red-600">
+        Error: {error?.response?.data?.message || error?.message}
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Header (same vibe like your cards page) */}
+      {/* Header */}
       <div className="mb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-900">
             All Blood Donation Requests
           </h2>
           <p className="text-sm text-slate-500">
-     {isFetching ? " • Updating..." : ""}
+            {isVolunteer ? "Volunteer view: can update status only." : ""}
+            {isFetching ? " • Updating..." : ""}
           </p>
         </div>
 
@@ -167,8 +206,12 @@ const statusMutation = useMutation({
                 <tr key={r._id}>
                   <td>
                     <div className="leading-tight">
-                      <div className="font-bold text-slate-900">{r.requesterName || "—"}</div>
-                      <div className="text-xs text-slate-500">{r.requesterEmail || "—"}</div>
+                      <div className="font-bold text-slate-900">
+                        {r.requesterName || "—"}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {r.requesterEmail || "—"}
+                      </div>
                     </div>
                   </td>
 
@@ -190,26 +233,30 @@ const statusMutation = useMutation({
 
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link
-                        to={`/donation-requests/${r._id}`}
-                        className="btn btn-primary btn-sm rounded-xl"
-                      >
-                        View
-                      </Link>
+                      {/* ✅ Admin can view details, Volunteer cannot (per spec) */}
+                      {isAdmin && (
+                        <Link
+                          to={`/donation-requests/${r._id}`}
+                          className="btn btn-primary btn-sm rounded-xl"
+                        >
+                          View
+                        </Link>
+                      )}
 
-                      {/* optional status update */}
- <select
-  className="select select-bordered select-sm rounded-xl bg-white"
-  defaultValue={r.status}
-  disabled={statusMutation.isPending}
-  onChange={(e) =>
-    statusMutation.mutate({ id: r._id, status: e.target.value })
-  }
-  title="Update status"
->
-  <option value="done">done</option>
-  <option value="cancelled">cancelled</option>
-</select>
+                      {/* ✅ Volunteer/Admin can update status */}
+                      <select
+                        className="select select-bordered select-sm rounded-xl bg-white"
+                        value={r.status || ""}
+                        disabled={statusMutation.isPending}
+                        onChange={(e) =>
+                          statusMutation.mutate({ id: r._id, status: e.target.value })
+                        }
+                        title="Update status"
+                      >
+                        {/* ✅ restrict update options exactly like backend */}
+                        <option value="done">done</option>
+                        <option value="cancelled">cancelled</option>
+                      </select>
                     </div>
                   </td>
                 </tr>

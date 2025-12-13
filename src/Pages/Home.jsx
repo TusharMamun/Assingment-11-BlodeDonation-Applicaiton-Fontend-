@@ -3,12 +3,9 @@ import Banner from './Banner'
 
 const Home = () => {
   return (
-    <div>
-<Banner></Banner>
-
-
-
-    </div>
+   <div className="w-full max-w-[90%] mx-auto">
+  <Banner />
+</div>
   )
 }
 

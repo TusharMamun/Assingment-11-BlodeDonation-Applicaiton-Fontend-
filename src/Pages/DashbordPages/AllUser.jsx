@@ -1,67 +1,130 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { HiOutlineDotsVertical } from "react-icons/hi";
-import { FiUserCheck, FiUserX, FiShield, FiUsers, FiSearch } from "react-icons/fi";
+import {
+  FiUserCheck,
+  FiUserX,
+  FiShield,
+  FiUsers,
+  FiSearch,
+} from "react-icons/fi";
 import useAuth from "../../Hooks/useAuth";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
+import useUserRole from "../../Hooks/useUserRole"; // ✅ logged-in role hook
 
 const AllUser = () => {
   const { user, loading } = useAuth();
   const axiosSecure = useAxiosSecure();
 
+  // ✅ logged-in role
+  const [myRole, isRoleLoading] = useUserRole();
+  const isAdmin = myRole === "admin";
+
   const [status, setStatus] = useState("all"); // all | active | blocked
+
+  // ✅ debounce search
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const { data, isLoading, refetch } = useQuery({
-    enabled: !loading && !!user,
-    queryKey: ["AllUserForAllUserPage", status, search, page, limit],
+  const params = useMemo(
+    () => ({ status, search: debouncedSearch, page, limit }),
+    [status, debouncedSearch, page, limit]
+  );
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    enabled: !loading && !!user?.email && !isRoleLoading,
+    queryKey: ["AllUserForAllUserPage", params],
     queryFn: async () => {
-      const res = await axiosSecure.get("/regesterDoner", {
-        params: { status, search, page, limit },
-      });
-      return res.data; // {result,total,totalPages,...}
+      const res = await axiosSecure.get("/regesterDoner", { params });
+      return res.data; // { result, total, totalPages, page, limit }
     },
     keepPreviousData: true,
   });
 
   const users = data?.result || [];
   const totalPages = data?.totalPages || 1;
+  const total = data?.total ?? 0;
 
-const updateStatus = async (id, nextStatus) => {
-  const confirm = await Swal.fire({
-    title: "Are you sure?",
-    text: `This user will be ${nextStatus}.`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes",
-    cancelButtonText: "Cancel",
+  // ✅ Mutations
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, nextStatus }) => {
+      const res = await axiosSecure.patch(`/users/${id}/status`, {
+        status: nextStatus,
+      });
+      return res.data;
+    },
+    onSuccess: async () => {
+      await Swal.fire({
+        icon: "success",
+        title: "Updated!",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      refetch();
+    },
+    onError: (err) => {
+      Swal.fire(
+        "Failed!",
+        err?.response?.data?.message || err?.message || "Update failed",
+        "error"
+      );
+    },
   });
 
-  if (!confirm.isConfirmed) return;
+  const roleMutation = useMutation({
+    mutationFn: async ({ id, role }) => {
+      const res = await axiosSecure.patch(`/users/${id}/role`, { role });
+      return res.data;
+    },
+    onSuccess: async () => {
+      await Swal.fire({
+        icon: "success",
+        title: "Role Updated!",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      refetch();
+    },
+    onError: (err) => {
+      Swal.fire(
+        "Failed!",
+        err?.response?.data?.message || err?.message || "Role update failed",
+        "error"
+      );
+    },
+  });
 
-  try {
-    await axiosSecure.patch(`/users/${id}/status`, { status: nextStatus });
-
-    await Swal.fire({
-      icon: "success",
-      title: "Updated!",
-      timer: 1200,
-      showConfirmButton: false,
+  const confirmAndUpdateStatus = async (id, nextStatus) => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: `This user will be ${nextStatus}.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "Cancel",
     });
+    if (!confirm.isConfirmed) return;
 
-    refetch();
-  } catch (err) {
-    Swal.fire(
-      "Failed!",
-      err?.response?.data?.message || err?.message || "Update failed",
-      "error"
-    );
-  }
-};
-  const updateRole = async (id, role) => {
+    statusMutation.mutate({ id, nextStatus });
+  };
+
+  const confirmAndUpdateRole = async (id, role) => {
     const confirm = await Swal.fire({
       title: "Confirm role change?",
       text: `This user will become ${role}.`,
@@ -72,23 +135,31 @@ const updateStatus = async (id, nextStatus) => {
     });
     if (!confirm.isConfirmed) return;
 
-    try {
-      await axiosSecure.patch(`/users/${id}/role`, { role });
-      await Swal.fire({ icon: "success", title: "Role Updated!", timer: 1200, showConfirmButton: false });
-      refetch();
-   
-    } catch (err) {
-      Swal.fire("Failed!", err?.response?.data?.message || err?.message || "Role update failed", "error");
-    }
+    roleMutation.mutate({ id, role });
   };
+
+  if (isError) {
+    return (
+      <div className="p-6 text-red-600">
+        Error: {error?.response?.data?.message || error?.message}
+      </div>
+    );
+  }
+
+  const busy = statusMutation.isPending || roleMutation.isPending;
 
   return (
     <div className="w-full">
       {/* Header */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">All Users</h1>
-          <p className="text-sm text-slate-500">View and manage all registered users.</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">
+            All Users
+          </h1>
+          <p className="text-sm text-slate-500">
+            View and manage all registered users.
+            {isFetching ? " • Updating..." : ""}
+          </p>
         </div>
 
         {/* Filter */}
@@ -96,12 +167,15 @@ const updateStatus = async (id, nextStatus) => {
           {["all", "active", "blocked"].map((s) => (
             <button
               key={s}
-              className={`btn btn-sm join-item ${status === s ? "btn-primary" : "btn-outline"}`}
+              className={`btn btn-sm join-item ${
+                status === s ? "btn-primary" : "btn-outline"
+              }`}
               type="button"
               onClick={() => {
                 setStatus(s);
                 setPage(1);
               }}
+              disabled={loading || isRoleLoading}
             >
               {s}
             </button>
@@ -120,13 +194,13 @@ const updateStatus = async (id, nextStatus) => {
             <div className="leading-tight">
               <p className="font-semibold">Users Table</p>
               <p className="text-xs text-slate-500">
-                {isLoading ? "Loading..." : `Showing: ${users.length} users`}
+                {isLoading ? "Loading..." : `Total: ${total} • Showing: ${users.length}`}
               </p>
             </div>
           </div>
 
           {/* Search */}
-          <label className="input input-bordered input-sm flex items-center gap-2 w-full sm:w-72">
+          <label className="input input-bordered input-sm flex items-center gap-2 w-full sm:w-80">
             <FiSearch className="opacity-60" />
             <input
               type="text"
@@ -172,8 +246,17 @@ const updateStatus = async (id, nextStatus) => {
                   const photo = u?.photo || u?.photoUrl || "";
                   const uname = u?.name || "Unknown";
                   const email = u?.email || "—";
-                  const role = u?.role || "donor";
+                  const rowRole = u?.role || "donor";
                   const st = u?.status || "active";
+
+                  const isSelf = user?.email && user.email === email;
+                  const rowIsAdmin = rowRole === "admin";
+
+                  // ✅ Only admin can manage, and not self
+                  const canManage = isAdmin && !isSelf;
+
+                  // optional: don't allow blocking another admin
+                  const canBlockThisUser = canManage && !rowIsAdmin;
 
                   return (
                     <tr key={u?._id || email} className="hover">
@@ -194,8 +277,12 @@ const updateStatus = async (id, nextStatus) => {
                           )}
 
                           <div className="min-w-0">
-                            <div className="font-semibold text-slate-800 truncate">{uname}</div>
-                            <div className="text-xs text-slate-500 truncate">ID: {u?._id || "—"}</div>
+                            <div className="font-semibold text-slate-800 truncate">
+                              {uname}
+                            </div>
+                            <div className="text-xs text-slate-500 truncate">
+                              ID: {u?._id || "—"}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -203,7 +290,9 @@ const updateStatus = async (id, nextStatus) => {
                       <td className="text-slate-700">{email}</td>
 
                       <td>
-                        <span className="badge badge-ghost badge-outline">{role}</span>
+                        <span className="badge badge-ghost badge-outline">
+                          {rowRole}
+                        </span>
                       </td>
 
                       <td>
@@ -222,42 +311,47 @@ const updateStatus = async (id, nextStatus) => {
                             <HiOutlineDotsVertical className="h-5 w-5" />
                           </button>
 
-                          <ul className="dropdown-content menu rounded-xl border border-slate-200 bg-white p-2 shadow-lg w-56">
-  {/* Block/Unblock – allowed for admin & volunteer */}
-    <ul className="dropdown-content menu rounded-xl border border-slate-200 bg-white p-2 shadow-lg w-56">
-                            {/* Block/Unblock – allowed for admin & volunteer (logged-in user) */}
-                            {(role === "admin" ||
-                              role === "volunteer") && (
+                          <ul className="dropdown-content menu rounded-xl border border-slate-200 bg-white p-2 shadow-lg w-56 z-50">
+                            {!isAdmin ? (
                               <li>
-                                {st === "blocked" ? (
-                                  <button
-                                    type="button"
-                                    className="gap-2"
-                                    onClick={() =>
-                                      updateStatus(u._id, "active")
-                                    }
-                                  >
-                                    <FiUserCheck className="h-4 w-4 text-green-600" />
-                                    Unblock user
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    className="gap-2"
-                                    onClick={() =>
-                                      updateStatus(u._id, "blocked")
-                                    }
-                                  >
-                                    <FiUserX className="h-4 w-4 text-red-600" />
-                                    Block user
-                                  </button>
-                                )}
+                                <span className="text-xs text-slate-500 px-2 py-2">
+                                  Only admin can manage users.
+                                </span>
                               </li>
-                            )}
-
-                            {/* Role change – ONLY admin (logged-in) */}    mn    
-                            {role === "admin" && (
+                            ) : isSelf ? (
+                              <li>
+                                <span className="text-xs text-slate-500 px-2 py-2">
+                                  You can’t modify your own account.
+                                </span>
+                              </li>
+                            ) : (
                               <>
+                                {/* Block/Unblock */}
+                                <li>
+                                  {st === "blocked" ? (
+                                    <button
+                                      type="button"
+                                      className="gap-2"
+                                      disabled={!canManage || busy}
+                                      onClick={() => confirmAndUpdateStatus(u._id, "active")}
+                                    >
+                                      <FiUserCheck className="h-4 w-4 text-green-600" />
+                                      Unblock user
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="gap-2"
+                                      disabled={!canBlockThisUser || busy}
+                                      onClick={() => confirmAndUpdateStatus(u._id, "blocked")}
+                                      title={!canBlockThisUser ? "Cannot block an admin user" : ""}
+                                    >
+                                      <FiUserX className="h-4 w-4 text-red-600" />
+                                      Block user
+                                    </button>
+                                  )}
+                                </li>
+
                                 <div className="my-1 h-px bg-slate-100" />
 
                                 {/* Make volunteer */}
@@ -265,9 +359,8 @@ const updateStatus = async (id, nextStatus) => {
                                   <button
                                     type="button"
                                     className="gap-2"
-                                    onClick={() =>
-                                      updateRole(u._id, "volunteer")
-                                    }
+                                    disabled={!canManage || rowRole === "volunteer" || busy}
+                                    onClick={() => confirmAndUpdateRole(u._id, "volunteer")}
                                   >
                                     <FiUsers className="h-4 w-4 text-indigo-600" />
                                     Make volunteer
@@ -279,9 +372,8 @@ const updateStatus = async (id, nextStatus) => {
                                   <button
                                     type="button"
                                     className="gap-2"
-                                    onClick={() =>
-                                      updateRole(u._id, "admin")
-                                    }
+                                    disabled={!canManage || rowRole === "admin" || busy}
+                                    onClick={() => confirmAndUpdateRole(u._id, "admin")}
                                   >
                                     <FiShield className="h-4 w-4 text-purple-600" />
                                     Make admin
@@ -290,8 +382,6 @@ const updateStatus = async (id, nextStatus) => {
                               </>
                             )}
                           </ul>
-</ul>
-
                         </div>
                       </td>
                     </tr>
@@ -305,7 +395,8 @@ const updateStatus = async (id, nextStatus) => {
         {/* Pagination */}
         <div className="flex flex-col gap-3 border-t border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
-            Page {page} of {totalPages}
+            Page <b className="text-slate-900">{data?.page || page}</b> of{" "}
+            <b className="text-slate-900">{totalPages}</b>
           </p>
 
           <div className="join">

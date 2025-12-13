@@ -8,7 +8,7 @@ import useAxiosSecure from "../../Hooks/useAxiosSecure";
 const CreateDonationRequest = () => {
   const { user } = useAuth();
   const axiosSecure = useAxiosSecure();
-  const locationData = useLoaderData(); 
+  const locationData = useLoaderData();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,7 +39,7 @@ const CreateDonationRequest = () => {
     },
   });
 
-  // district->upazila
+  // district -> upazila
   const districtId = useWatch({ control, name: "recipientDistrict" });
 
   const selectedDistrict = useMemo(() => {
@@ -53,11 +53,11 @@ const CreateDonationRequest = () => {
   }, [districtId, setValue]);
 
   const onSubmit = async (data) => {
-    // ✅ status default pending (no input)
     const districtObj = locationData?.find(
       (d) => String(d.id) === String(data.recipientDistrict)
     );
 
+    // ✅ backend will set: status, createdAt
     const payload = {
       requesterName: data.requesterName,
       requesterEmail: data.requesterEmail,
@@ -70,11 +70,9 @@ const CreateDonationRequest = () => {
       donationDate: data.donationDate,
       donationTime: data.donationTime,
       requestMessage: data.requestMessage,
-      status: "pending",
-      createdAt: new Date(),
     };
 
-    // ✅ confirmation alert
+    // ✅ confirmation
     const confirm = await Swal.fire({
       title: "Confirm Request?",
       text: "Do you want to create this donation request?",
@@ -89,8 +87,7 @@ const CreateDonationRequest = () => {
     try {
       setSubmitting(true);
 
-      // 🔥 change endpoint as your backend route
-      const res = await axiosSecure.post("/CreatedBloadDonation", payload);
+      await axiosSecure.post("/CreatedBloadDonation", payload);
 
       await Swal.fire({
         icon: "success",
@@ -100,13 +97,24 @@ const CreateDonationRequest = () => {
         showConfirmButton: false,
       });
 
-      // navigate where you want (example: my requests page)
       navigate("/dashboard");
     } catch (err) {
+      const status = err?.response?.status;
+      const message =
+        err?.response?.data?.message || err?.message || "Something went wrong";
+
+      let title = "Failed";
+      let icon = "error";
+
+      if (status === 403) title = "Access Denied"; // blocked user
+      if (status === 404) title = "User Not Found";
+      if (status === 400) title = "Invalid Input";
+
       Swal.fire({
-        icon: "error",
-        title: "Failed",
-        text: err?.response?.data?.message || err?.message || "Something went wrong",
+        icon,
+        title,
+        text: message,
+        confirmButtonText: "OK",
       });
     } finally {
       setSubmitting(false);
@@ -132,7 +140,7 @@ const CreateDonationRequest = () => {
                   <span className="label-text font-medium">Requester Name</span>
                 </div>
                 <input
-             
+                  readOnly
                   className="input input-bordered w-full rounded-xl bg-slate-100"
                   {...register("requesterName")}
                 />
@@ -143,7 +151,7 @@ const CreateDonationRequest = () => {
                   <span className="label-text font-medium">Requester Email</span>
                 </div>
                 <input
-               
+                  readOnly
                   className="input input-bordered w-full rounded-xl bg-slate-100"
                   {...register("requesterEmail")}
                 />
@@ -161,10 +169,14 @@ const CreateDonationRequest = () => {
                     errors.recipientName ? "input-error" : ""
                   }`}
                   placeholder="Recipient full name"
-                  {...register("recipientName", { required: "Recipient name is required" })}
+                  {...register("recipientName", {
+                    required: "Recipient name is required",
+                  })}
                 />
                 {errors.recipientName && (
-                  <p className="mt-1 text-xs text-error">{errors.recipientName.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.recipientName.message}
+                  </p>
                 )}
               </label>
 
@@ -177,7 +189,9 @@ const CreateDonationRequest = () => {
                     errors.bloodGroup ? "select-error" : ""
                   }`}
                   defaultValue=""
-                  {...register("bloodGroup", { required: "Blood group is required" })}
+                  {...register("bloodGroup", {
+                    required: "Blood group is required",
+                  })}
                 >
                   <option value="" disabled>
                     Select blood group
@@ -189,7 +203,9 @@ const CreateDonationRequest = () => {
                   ))}
                 </select>
                 {errors.bloodGroup && (
-                  <p className="mt-1 text-xs text-error">{errors.bloodGroup.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.bloodGroup.message}
+                  </p>
                 )}
               </label>
             </div>
@@ -198,14 +214,18 @@ const CreateDonationRequest = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Recipient District</span>
+                  <span className="label-text font-medium">
+                    Recipient District
+                  </span>
                 </div>
                 <select
                   className={`select select-bordered w-full rounded-xl ${
                     errors.recipientDistrict ? "select-error" : ""
                   }`}
                   defaultValue=""
-                  {...register("recipientDistrict", { required: "District is required" })}
+                  {...register("recipientDistrict", {
+                    required: "District is required",
+                  })}
                 >
                   <option value="" disabled>
                     Select district
@@ -217,13 +237,17 @@ const CreateDonationRequest = () => {
                   ))}
                 </select>
                 {errors.recipientDistrict && (
-                  <p className="mt-1 text-xs text-error">{errors.recipientDistrict.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.recipientDistrict.message}
+                  </p>
                 )}
               </label>
 
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Recipient Upazila</span>
+                  <span className="label-text font-medium">
+                    Recipient Upazila
+                  </span>
                 </div>
                 <select
                   className={`select select-bordered w-full rounded-xl ${
@@ -231,7 +255,9 @@ const CreateDonationRequest = () => {
                   }`}
                   disabled={!districtId}
                   defaultValue=""
-                  {...register("recipientUpazila", { required: "Upazila is required" })}
+                  {...register("recipientUpazila", {
+                    required: "Upazila is required",
+                  })}
                 >
                   <option value="" disabled>
                     {districtId ? "Select upazila" : "Select district first"}
@@ -243,7 +269,9 @@ const CreateDonationRequest = () => {
                   ))}
                 </select>
                 {errors.recipientUpazila && (
-                  <p className="mt-1 text-xs text-error">{errors.recipientUpazila.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.recipientUpazila.message}
+                  </p>
                 )}
               </label>
             </div>
@@ -259,26 +287,36 @@ const CreateDonationRequest = () => {
                     errors.hospitalName ? "input-error" : ""
                   }`}
                   placeholder="Dhaka Medical College Hospital"
-                  {...register("hospitalName", { required: "Hospital name is required" })}
+                  {...register("hospitalName", {
+                    required: "Hospital name is required",
+                  })}
                 />
                 {errors.hospitalName && (
-                  <p className="mt-1 text-xs text-error">{errors.hospitalName.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.hospitalName.message}
+                  </p>
                 )}
               </label>
 
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Full Address Line</span>
+                  <span className="label-text font-medium">
+                    Full Address Line
+                  </span>
                 </div>
                 <input
                   className={`input input-bordered w-full rounded-xl ${
                     errors.fullAddress ? "input-error" : ""
                   }`}
                   placeholder="Zahir Raihan Rd, Dhaka"
-                  {...register("fullAddress", { required: "Full address is required" })}
+                  {...register("fullAddress", {
+                    required: "Full address is required",
+                  })}
                 />
                 {errors.fullAddress && (
-                  <p className="mt-1 text-xs text-error">{errors.fullAddress.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.fullAddress.message}
+                  </p>
                 )}
               </label>
             </div>
@@ -294,10 +332,14 @@ const CreateDonationRequest = () => {
                   className={`input input-bordered w-full rounded-xl ${
                     errors.donationDate ? "input-error" : ""
                   }`}
-                  {...register("donationDate", { required: "Donation date is required" })}
+                  {...register("donationDate", {
+                    required: "Donation date is required",
+                  })}
                 />
                 {errors.donationDate && (
-                  <p className="mt-1 text-xs text-error">{errors.donationDate.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.donationDate.message}
+                  </p>
                 )}
               </label>
 
@@ -310,10 +352,14 @@ const CreateDonationRequest = () => {
                   className={`input input-bordered w-full rounded-xl ${
                     errors.donationTime ? "input-error" : ""
                   }`}
-                  {...register("donationTime", { required: "Donation time is required" })}
+                  {...register("donationTime", {
+                    required: "Donation time is required",
+                  })}
                 />
                 {errors.donationTime && (
-                  <p className="mt-1 text-xs text-error">{errors.donationTime.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.donationTime.message}
+                  </p>
                 )}
               </label>
             </div>
@@ -330,11 +376,16 @@ const CreateDonationRequest = () => {
                 placeholder="Write details why blood is needed..."
                 {...register("requestMessage", {
                   required: "Request message is required",
-                  minLength: { value: 10, message: "Write at least 10 characters" },
+                  minLength: {
+                    value: 10,
+                    message: "Write at least 10 characters",
+                  },
                 })}
               />
               {errors.requestMessage && (
-                <p className="mt-1 text-xs text-error">{errors.requestMessage.message}</p>
+                <p className="mt-1 text-xs text-error">
+                  {errors.requestMessage.message}
+                </p>
               )}
             </label>
 

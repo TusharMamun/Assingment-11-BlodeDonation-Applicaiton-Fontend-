@@ -2,13 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  FiTrash2,
-  FiEye,
-  FiEdit,
-  FiCheckCircle,
-  FiXCircle,
-} from "react-icons/fi";
+import { FiTrash2, FiEye, FiEdit, FiCheckCircle, FiXCircle } from "react-icons/fi";
 import useAuth from "../../Hooks/useAuth";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 
@@ -33,7 +27,7 @@ const MyLatestCompnent = () => {
     enabled: !loading && !!user?.email,
     queryKey: ["dashboardLatest3Requests", user?.email],
     queryFn: async () => {
-      const res = await axiosSecure.get("/my-blood-donation-requests", {
+      const res = await axiosSecure.get("/latest-3-my-blood-donation-requests", {
         params: { email: user.email },
       });
       return Array.isArray(res.data) ? res.data : [];
@@ -43,7 +37,7 @@ const MyLatestCompnent = () => {
   const handleDelete = async (id) => {
     const confirm = await Swal.fire({
       title: "Delete this request?",
-      text: "This action cannot be undone.",
+      text: "Only pending requests can be deleted.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete",
@@ -53,13 +47,17 @@ const MyLatestCompnent = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axiosSecure.delete(`/my-blood-donation-requests/${id}`);
+      await axiosSecure.delete(`/my-blood-donation-requests/${id}`, {
+        params: { email: user.email },
+      });
+
       await Swal.fire({
         icon: "success",
         title: "Deleted!",
         timer: 1200,
         showConfirmButton: false,
       });
+
       refetch();
     } catch (err) {
       Swal.fire(
@@ -69,78 +67,47 @@ const MyLatestCompnent = () => {
       );
     }
   };
-const updateRequestStatus = async (id, newStatus) => {
-  const confirm = await Swal.fire({
-    title: `Set status to "${newStatus}"?`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Yes, update",
-    cancelButtonText: "Cancel",
-  });
 
-  if (!confirm.isConfirmed) return;
-
-  try {
-    await axiosSecure.patch(`/my-blood-donation-requests-to-processing/${id}`, {
-      status: newStatus
+  const updateRequestStatus = async (id, newStatus) => {
+    const confirm = await Swal.fire({
+      title: `Set status to "${newStatus}"?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, update",
+      cancelButtonText: "Cancel",
     });
 
-    await Swal.fire({
-      icon: "success",
-      title: `Status updated to "${newStatus}"!`,
-      timer: 1200,
-      showConfirmButton: false,
-    });
+    if (!confirm.isConfirmed) return;
 
-    refetch();
-  } catch (err) {
-    Swal.fire(
-      "Update failed!",
-      err?.response?.data?.message || err?.message || "Something went wrong.",
-      "error"
-    );
-  }
-};
+    try {
+      await axiosSecure.patch(`/my-blood-donation-requests/${id}/status`, {
+        status: newStatus,
+      }, {
+        params: { email: user.email },
+      });
 
-  // const handleStatusChange = async (id, nextStatus) => {
-  //   const confirm = await Swal.fire({
-  //     title: `Change status to "${nextStatus}"?`,
-  //     icon: "question",
-  //     showCancelButton: true,
-  //     confirmButtonText: "Yes",
-  //     cancelButtonText: "No",
-  //   });
+      await Swal.fire({
+        icon: "success",
+        title: `Status updated to "${newStatus}"!`,
+        timer: 1200,
+        showConfirmButton: false,
+      });
 
-  //   if (!confirm.isConfirmed) return;
-
-  //   try {
-  //     await axiosSecure.patch(`/my-blood-donation-requests/${id}`, {
-  //       status: nextStatus, // "done" | "canceled"
-  //     });
-
-  //     await Swal.fire({
-  //       icon: "success",
-  //       title: "Updated!",
-  //       timer: 1100,
-  //       showConfirmButton: false,
-  //     });
-
-  //     refetch();
-  //   } catch (err) {
-  //     Swal.fire(
-  //       "Failed!",
-  //       err?.response?.data?.message || err?.message || "Update failed",
-  //       "error"
-  //     );
-  //   }
-  // };
+      refetch();
+    } catch (err) {
+      Swal.fire(
+        "Update failed!",
+        err?.response?.data?.message || err?.message || "Something went wrong.",
+        "error"
+      );
+    }
+  };
 
   if (loading || isLoading) return <div className="p-6">Loading...</div>;
   if (isError) return <div className="p-6">Error: {error?.message}</div>;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* ✅ Simple welcome text (no banner) */}
       <div className="mb-5">
         <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">
           Welcome, <span className="text-emerald-600">{donorName}</span>
@@ -150,7 +117,6 @@ const updateRequestStatus = async (id, newStatus) => {
         </p>
       </div>
 
-      {/* ✅ Latest 3 Requests (HIDDEN if none) */}
       {requests.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-slate-200 p-4 flex items-end justify-between gap-3">
@@ -163,10 +129,7 @@ const updateRequestStatus = async (id, newStatus) => {
               </p>
             </div>
 
-            <Link
-              to="/dashboard/my-donation-requests"
-              className="btn btn-outline btn-sm rounded-xl"
-            >
+            <Link to="/dashboard/my-donation-requests" className="btn btn-outline btn-sm rounded-xl">
               View My All Request
             </Link>
           </div>
@@ -188,45 +151,37 @@ const updateRequestStatus = async (id, newStatus) => {
 
               <tbody>
                 {requests.map((r) => {
-                  const status = (r?.status || "").toLowerCase();
-                  const isInProgress = status === "inprogress";
+                  const st = String(r?.status || "").toLowerCase();
+                  const isPending = st === "pending";
+                  const isInProgress = st === "inprogress";
 
                   return (
                     <tr key={r._id} className="hover">
-                      <td className="font-semibold text-slate-800">
-                        {r?.recipientName || "—"}
-                      </td>
+                      <td className="font-semibold text-slate-800">{r?.recipientName || "—"}</td>
 
                       <td className="text-slate-700">
-                        {[r?.recipientUpazila, r?.recipientDistrict]
-                          .filter(Boolean)
-                          .join(", ") || "—"}
+                        {[r?.recipientUpazila, r?.recipientDistrict].filter(Boolean).join(", ") || "—"}
                       </td>
 
                       <td className="text-slate-700">{r?.donationDate || "—"}</td>
-
                       <td className="text-slate-700">{r?.donationTime || "—"}</td>
 
                       <td>
-                        <span className="badge badge-outline">
-                          {r?.bloodGroup || "—"}
-                        </span>
+                        <span className="badge badge-outline">{r?.bloodGroup || "—"}</span>
                       </td>
 
                       <td>
-                        <span className="badge badge-outline">
-                          {r?.status || "—"}
-                        </span>
+                        <span className="badge badge-outline">{r?.status || "—"}</span>
                       </td>
 
                       <td className="text-slate-700">
                         {isInProgress ? (
                           <div className="text-sm">
                             <div className="font-semibold text-slate-800">
-                              {r?.donorName || user?.displayName || "—"}
+                              {r?.donorName || "—"}
                             </div>
                             <div className="text-xs text-slate-500 break-all">
-                              {r?.donorEmail || user?.email || "—"}
+                              {r?.donorEmail || "—"}
                             </div>
                           </div>
                         ) : (
@@ -236,56 +191,58 @@ const updateRequestStatus = async (id, newStatus) => {
 
                       <td className="text-right">
                         <div className="flex flex-wrap gap-2 justify-end">
+                          {/* ✅ Always allowed */}
                           <button
                             type="button"
                             className="btn btn-sm btn-outline rounded-xl gap-2"
-                            onClick={() =>
-                              navigate(`/donation-requests/${r._id}`)
-                            }
-                            // /donation-requests/:id
+                            onClick={() => navigate(`/donation-requests/${r._id}`)}
                           >
                             <FiEye /> View
                           </button>
 
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline rounded-xl gap-2"
-                            onClick={() =>
-                              navigate(`/updateDonation/${r._id}`)
-                            }
-                          >
-                            <FiEdit /> Edit
-                          </button>
+                          {/* ✅ Only pending: Edit + Delete */}
+                          {isPending && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline rounded-xl gap-2"
+                                onClick={() => navigate(`/updateDonation/${r._id}`)}
+                              >
+                                <FiEdit /> Edit
+                              </button>
 
-                          
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-error rounded-xl gap-2"
+                                onClick={() => handleDelete(r._id)}
+                              >
+                                <FiTrash2 /> Delete
+                              </button>
+                            </>
+                          )}
+
+                          {/* ✅ Only inprogress: Done + Cancel */}
                           {isInProgress && (
                             <>
                               <button
                                 type="button"
                                 className="btn btn-sm btn-success rounded-xl gap-2"
-                                onClick={() => handleStatusChange(r._id, "done")}
+                                onClick={() => updateRequestStatus(r._id, "done")}
                               >
                                 <FiCheckCircle /> Done
                               </button>
-    <button
+
+                              <button
                                 type="button"
                                 className="btn btn-sm btn-warning rounded-xl gap-2"
-                    onClick={() => updateRequestStatus(r._id, 'pending')}
+                                onClick={() => updateRequestStatus(r._id, "canceled")}
                               >
                                 <FiXCircle /> Cancel
                               </button>
-
-                          
                             </>
                           )}
 
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-error rounded-xl gap-2"
-                            onClick={() => handleDelete(r._id)}
-                          >
-                            <FiTrash2 /> Delete
-                          </button>
+                          {/* ✅ done/canceled: no extra buttons */}
                         </div>
                       </td>
                     </tr>
@@ -295,12 +252,8 @@ const updateRequestStatus = async (id, newStatus) => {
             </table>
           </div>
 
-          {/* ✅ Bottom “View my all request” button */}
           <div className="border-t border-slate-200 p-4 flex justify-end">
-            <Link
-              to="/dashboard/my-donation-requests"
-              className="btn btn-primary rounded-xl"
-            >
+            <Link to="/dashboard/my-donation-requests" className="btn btn-primary rounded-xl">
               View My All Request
             </Link>
           </div>
