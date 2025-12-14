@@ -4,12 +4,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import useUserRole from "../../Hooks/useUserRole";
+import useAuth from "../../Hooks/useAuth";
 
 const STATUSES = ["", "inprogress", "pending", "approved", "done", "cancelled"];
 const BLOOD = ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const AllDonerRequestes = () => {
   const axiosSecure = useAxiosSecure();
+  const {user} =useAuth()
   const [myRole, roleLoading] = useUserRole(); // "admin" | "volunteer" | "donor"
   const isVolunteer = myRole === "volunteer";
   const isAdmin = myRole === "admin";
@@ -41,10 +43,10 @@ const AllDonerRequestes = () => {
     refetch,
     isFetching,
   } = useQuery({
-    enabled: !roleLoading, // wait role
+    enabled: !roleLoading,
     queryKey: ["blood-donation-requests", params],
     queryFn: async () => {
-      const res = await axiosSecure.get("/blood-donation-requests", { params });
+      const res = await axiosSecure.get("/blood-donation-requests", { params});
       return res.data; // {result,total,page,totalPages}
     },
     keepPreviousData: true,
@@ -55,11 +57,20 @@ const AllDonerRequestes = () => {
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }) => {
-      const res = await axiosSecure.patch(`/blood-donation-requests/${id}/status`, { status });
+      const res = await axiosSecure.patch(
+  `/blood-donation-requests/${id}/status`,
+  { status },
+  { headers: { "x-user-email": user?.email } }
+);
       return res.data;
     },
     onSuccess: () => {
-      Swal.fire({ icon: "success", title: "Status updated!", timer: 1000, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: "Status updated!",
+        timer: 1000,
+        showConfirmButton: false,
+      });
       refetch();
     },
     onError: (err) => {
@@ -86,6 +97,24 @@ const AllDonerRequestes = () => {
     setPage(1);
   };
 
+  // ✅ confirm before updating (admin only)
+  const confirmStatusChange = async (id, nextStatus) => {
+    if (!isAdmin) return;
+
+    const result = await Swal.fire({
+      title: "Confirm update?",
+      text: `Change status to "${nextStatus}"?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "No",
+    });
+
+    if (!result.isConfirmed) return;
+
+    statusMutation.mutate({ id, status: nextStatus });
+  };
+
   if (roleLoading || isLoading) {
     return <div className="p-10 text-center text-slate-500">Loading...</div>;
   }
@@ -106,7 +135,8 @@ const AllDonerRequestes = () => {
             All Blood Donation Requests
           </h2>
           <p className="text-sm text-slate-500">
-            {isVolunteer ? "Volunteer view: can update status only." : ""}
+            {isVolunteer ? "Volunteer view: cannot update status." : ""}
+            {!isAdmin ? " Donor/Volunteer cannot change status." : ""}
             {isFetching ? " • Updating..." : ""}
           </p>
         </div>
@@ -202,65 +232,89 @@ const AllDonerRequestes = () => {
                 </td>
               </tr>
             ) : (
-              list.map((r) => (
-                <tr key={r._id}>
-                  <td>
-                    <div className="leading-tight">
-                      <div className="font-bold text-slate-900">
-                        {r.requesterName || "—"}
+              list.map((r) => {
+                const canUpdateNow = r.status === "inprogress"; // match your backend rule
+                const disableSelect =
+                  !isAdmin || !canUpdateNow || statusMutation.isPending;
+
+                return (
+                  <tr key={r._id}>
+                    <td>
+                      <div className="leading-tight">
+                        <div className="font-bold text-slate-900">
+                          {r.requesterName || "—"}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {r.requesterEmail || "—"}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500">
-                        {r.requesterEmail || "—"}
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="font-semibold">{r.recipientName || "—"}</td>
+                    <td className="font-semibold">{r.recipientName || "—"}</td>
 
-                  <td>
-                    {r.recipientDistrict || "—"}
-                    {r.recipientUpazila ? `, ${r.recipientUpazila}` : ""}
-                  </td>
+                    <td>
+                      {r.recipientDistrict || "—"}
+                      {r.recipientUpazila ? `, ${r.recipientUpazila}` : ""}
+                    </td>
 
-                  <td>{r.hospitalName || "—"}</td>
-                  <td className="font-bold">{r.bloodGroup || "—"}</td>
-                  <td>{r.donationDate || "—"}</td>
-                  <td>{r.donationTime || "—"}</td>
+                    <td>{r.hospitalName || "—"}</td>
+                    <td className="font-bold">{r.bloodGroup || "—"}</td>
+                    <td>{r.donationDate || "—"}</td>
+                    <td>{r.donationTime || "—"}</td>
 
-                  <td>
-                    <span className={badgeClass(r.status)}>{r.status || "—"}</span>
-                  </td>
+                    <td>
+                      <span className={badgeClass(r.status)}>
+                        {r.status || "—"}
+                      </span>
+                    </td>
 
-                  <td className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {/* ✅ Admin can view details, Volunteer cannot (per spec) */}
-                      {isAdmin && (
-                        <Link
-                          to={`/donation-requests/${r._id}`}
-                          className="btn btn-primary btn-sm rounded-xl"
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Admin can view */}
+                        {isAdmin && (
+                          <Link
+                            to={`/donation-requests/${r._id}`}
+                            className="btn btn-primary btn-sm rounded-xl"
+                          >
+                            View
+                          </Link>
+                        )}
+
+                        {/* ✅ Only admin can change status */}
+                        <select
+                          className="select select-bordered select-sm rounded-xl bg-white"
+                          value={r.status || ""}
+                          disabled={disableSelect}
+                          onChange={(e) => {
+                            if (!isAdmin) return; // extra safety
+                            confirmStatusChange(r._id, e.target.value);
+                          }}
+                          title={
+                            !isAdmin
+                              ? "Only admin can update status"
+                              : !canUpdateNow
+                              ? "Can update only when status is inprogress"
+                              : "Update status"
+                          }
                         >
-                          View
-                        </Link>
-                      )}
+                          {/* show current status (so select shows correct value) */}
+                          <option value={r.status || ""} disabled>
+                            {r.status || "—"}
+                          </option>
 
-                      {/* ✅ Volunteer/Admin can update status */}
-                      <select
-                        className="select select-bordered select-sm rounded-xl bg-white"
-                        value={r.status || ""}
-                        disabled={statusMutation.isPending}
-                        onChange={(e) =>
-                          statusMutation.mutate({ id: r._id, status: e.target.value })
-                        }
-                        title="Update status"
-                      >
-                        {/* ✅ restrict update options exactly like backend */}
-                        <option value="done">done</option>
-                        <option value="cancelled">cancelled</option>
-                      </select>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                          {/* only show update options for admin + inprogress */}
+                          {isAdmin && canUpdateNow && (
+                            <>
+                              <option value="done">done</option>
+                              <option value="cancelled">cancelled</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

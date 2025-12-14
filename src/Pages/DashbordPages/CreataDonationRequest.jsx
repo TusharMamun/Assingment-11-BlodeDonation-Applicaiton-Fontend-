@@ -25,8 +25,8 @@ const CreateDonationRequest = () => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      requesterName: user?.displayName || "",
-      requesterEmail: user?.email || "",
+      requesterName: "",
+      requesterEmail: "",
       recipientName: "",
       recipientDistrict: "",
       recipientUpazila: "",
@@ -38,6 +38,14 @@ const CreateDonationRequest = () => {
       requestMessage: "",
     },
   });
+
+  // ✅ FIX: set requester fields AFTER user loads
+  useEffect(() => {
+    if (user?.email) {
+      setValue("requesterName", user?.displayName || "");
+      setValue("requesterEmail", user?.email || "");
+    }
+  }, [user, setValue]);
 
   // district -> upazila
   const districtId = useWatch({ control, name: "recipientDistrict" });
@@ -53,11 +61,15 @@ const CreateDonationRequest = () => {
   }, [districtId, setValue]);
 
   const onSubmit = async (data) => {
+    // ✅ check auth
+    if (!user?.email) {
+      return Swal.fire("Login Required", "Please login first.", "info");
+    }
+
     const districtObj = locationData?.find(
       (d) => String(d.id) === String(data.recipientDistrict)
     );
 
-    // ✅ backend will set: status, createdAt
     const payload = {
       requesterName: data.requesterName,
       requesterEmail: data.requesterEmail,
@@ -72,7 +84,6 @@ const CreateDonationRequest = () => {
       requestMessage: data.requestMessage,
     };
 
-    // ✅ confirmation
     const confirm = await Swal.fire({
       title: "Confirm Request?",
       text: "Do you want to create this donation request?",
@@ -87,12 +98,12 @@ const CreateDonationRequest = () => {
     try {
       setSubmitting(true);
 
-      await axiosSecure.post("/CreatedBloadDonation", payload);
+      const res = await axiosSecure.post("/CreatedBloadDonation", payload);
 
       await Swal.fire({
         icon: "success",
         title: "Request Created!",
-        text: "Your donation request has been submitted (pending).",
+        text: res?.data?.message || "Your request has been submitted (pending).",
         timer: 1600,
         showConfirmButton: false,
       });
@@ -104,14 +115,12 @@ const CreateDonationRequest = () => {
         err?.response?.data?.message || err?.message || "Something went wrong";
 
       let title = "Failed";
-      let icon = "error";
-
-      if (status === 403) title = "Access Denied"; // blocked user
+      if (status === 403) title = "Access Denied";
       if (status === 404) title = "User Not Found";
       if (status === 400) title = "Invalid Input";
 
       Swal.fire({
-        icon,
+        icon: "error",
         title,
         text: message,
         confirmButtonText: "OK",
@@ -214,9 +223,7 @@ const CreateDonationRequest = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">
-                    Recipient District
-                  </span>
+                  <span className="label-text font-medium">Recipient District</span>
                 </div>
                 <select
                   className={`select select-bordered w-full rounded-xl ${
@@ -245,9 +252,7 @@ const CreateDonationRequest = () => {
 
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">
-                    Recipient Upazila
-                  </span>
+                  <span className="label-text font-medium">Recipient Upazila</span>
                 </div>
                 <select
                   className={`select select-bordered w-full rounded-xl ${
@@ -300,9 +305,7 @@ const CreateDonationRequest = () => {
 
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">
-                    Full Address Line
-                  </span>
+                  <span className="label-text font-medium">Full Address Line</span>
                 </div>
                 <input
                   className={`input input-bordered w-full rounded-xl ${
@@ -332,14 +335,10 @@ const CreateDonationRequest = () => {
                   className={`input input-bordered w-full rounded-xl ${
                     errors.donationDate ? "input-error" : ""
                   }`}
-                  {...register("donationDate", {
-                    required: "Donation date is required",
-                  })}
+                  {...register("donationDate", { required: "Donation date is required" })}
                 />
                 {errors.donationDate && (
-                  <p className="mt-1 text-xs text-error">
-                    {errors.donationDate.message}
-                  </p>
+                  <p className="mt-1 text-xs text-error">{errors.donationDate.message}</p>
                 )}
               </label>
 
@@ -352,14 +351,10 @@ const CreateDonationRequest = () => {
                   className={`input input-bordered w-full rounded-xl ${
                     errors.donationTime ? "input-error" : ""
                   }`}
-                  {...register("donationTime", {
-                    required: "Donation time is required",
-                  })}
+                  {...register("donationTime", { required: "Donation time is required" })}
                 />
                 {errors.donationTime && (
-                  <p className="mt-1 text-xs text-error">
-                    {errors.donationTime.message}
-                  </p>
+                  <p className="mt-1 text-xs text-error">{errors.donationTime.message}</p>
                 )}
               </label>
             </div>
@@ -376,20 +371,14 @@ const CreateDonationRequest = () => {
                 placeholder="Write details why blood is needed..."
                 {...register("requestMessage", {
                   required: "Request message is required",
-                  minLength: {
-                    value: 10,
-                    message: "Write at least 10 characters",
-                  },
+                  minLength: { value: 10, message: "Write at least 10 characters" },
                 })}
               />
               {errors.requestMessage && (
-                <p className="mt-1 text-xs text-error">
-                  {errors.requestMessage.message}
-                </p>
+                <p className="mt-1 text-xs text-error">{errors.requestMessage.message}</p>
               )}
             </label>
 
-            {/* submit */}
             <button
               type="submit"
               disabled={submitting}

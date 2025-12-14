@@ -103,6 +103,7 @@ const UpdateProfile = () => {
 
       navigate(-1);
     } catch (err) {
+      console.log(err)
       Swal.fire({
         icon: "error",
         title: "Update failed",
