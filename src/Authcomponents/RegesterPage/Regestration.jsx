@@ -14,7 +14,12 @@ const Regestration = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+
+  // ✅ redirect target (PrivateRoute should send: state={{ from: location }})
+  const redirectTo =
+    location.state?.from?.pathname ||
+    location.state?.pathname || // fallback (if you set state differently somewhere)
+    "/dashboard"; // ✅ default after signup
 
   const bloodGroups = useMemo(
     () => ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
@@ -83,7 +88,7 @@ const Regestration = () => {
       const photoURL = await imageUpload(imageFile);
 
       // 2) create user
-      const result = await createUser(email, password);
+      await createUser(email, password);
 
       // 3) update profile
       await updateUserProfile({
@@ -91,22 +96,20 @@ const Regestration = () => {
         photoURL: photoURL || "",
       });
 
-      // 4) save donor to DB (IMPORTANT: await)
+      // 4) save donor to DB
       const donorPayload = {
         email,
         name,
         bloodGroup: data.bloodGroup,
         district: districtName,
         upazila: data.upazila,
-        photoURL, // ✅ consistent
+        photoURL,
         role: "donor",
         status: "active",
       };
 
-      const res = await AxiosSecure.post("/regesterDoner", donorPayload);
-      console.log("after saving regesterDonerData", res.data);
+      await AxiosSecure.post("/regesterDoner", donorPayload);
 
-      // ✅ success alert only after DB save
       await Swal.fire({
         icon: "success",
         title: "Registration successful!",
@@ -116,7 +119,9 @@ const Regestration = () => {
       });
 
       reset();
-      navigate(from, { replace: true });
+
+      // ✅ redirect after success
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -141,8 +146,7 @@ const Regestration = () => {
     }
   };
 
-  if (pageLoading)
-    return <Loading label="Uploading photo & creating account..." />;
+  if (pageLoading) return <Loading label="Uploading photo & creating account..." />;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-base-200">
