@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../Hooks/useAuth";
+import useUserRole from "../../../Hooks/useUserRole";
 
 /* ---------- styles ---------- */
 const navClass = ({ isActive }) =>
@@ -74,6 +75,9 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // ✅ FIX: useUserRole returns array
+  const [role, IsRoleLoadding] = useUserRole();
+
   // close drawer on route change (mobile)
   useEffect(() => {
     const el = document.getElementById("dash-drawer");
@@ -111,6 +115,10 @@ const DashboardLayout = () => {
                 <div className="leading-tight">
                   <p className="text-sm text-slate-500">Dashboard</p>
                   <p className="font-bold text-slate-800">Control Panel</p>
+                  {/* ✅ optional: show role */}
+                  {!IsRoleLoadding && role && (
+                    <p className="text-xs text-slate-500 capitalize">Role: {role}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -159,6 +167,7 @@ const DashboardLayout = () => {
               {/* menu */}
               <div className="mt-2 flex-1 overflow-y-auto pr-1">
                 <div className="space-y-2">
+                  {/* common menu */}
                   <NavLink to="/dashboard" className={navClass} title="Dashboard Home">
                     <IconWrap><HomeIcon /></IconWrap>
                     <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Dashboard Home</span>
@@ -169,35 +178,75 @@ const DashboardLayout = () => {
                     <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Profile</span>
                   </NavLink>
 
-                  <NavLink to="/dashboard/my-donation-requests" className={navClass} title="My Donation Requests">
-                    <IconWrap><RequestIcon /></IconWrap>
-                    <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Donation Requests</span>
-                  </NavLink>
+                  {/* ✅ show loading placeholder */}
+                  {IsRoleLoadding ? (
+                    <div className="rounded-xl bg-white/60 border border-indigo-100 px-3 py-3 text-sm text-slate-600">
+                      Loading menu...
+                    </div>
+                  ) : (
+                    <>
+                      {/* ---------------- DONOR MENU ---------------- */}
+                      {role === "donor" && (
+                        <>
+                          <NavLink to="/dashboard/my-donation-requests" className={navClass} title="My Donation Requests">
+                            <IconWrap><RequestIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Donation Requests</span>
+                          </NavLink>
 
-                  <NavLink to="/dashboard/creatDonerRequest" className={navClass} title="Create Donation Request">
-                    <IconWrap><PlusDropIcon /></IconWrap>
-                    <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Create Donation Request</span>
-                  </NavLink>
+                          <NavLink to="/dashboard/creatDonerRequest" className={navClass} title="Create Donation Request">
+                            <IconWrap><PlusDropIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Create Donation Request</span>
+                          </NavLink>
 
-                  <NavLink to="/dashboard/all-blood-donation-request" className={navClass} title="All Donation Requests">
-                    <IconWrap><RequestIcon /></IconWrap>
-                    <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Donation Request</span>
-                  </NavLink>
+                          <NavLink to="/dashboard/mydonation" className={navClass} title="My Funding">
+                            <IconWrap><MoneyIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Funding</span>
+                          </NavLink>
+                        </>
+                      )}
 
-                  <NavLink to="/dashboard/mydonation" className={navClass} title="My Funding">
-                    <IconWrap><MoneyIcon /></IconWrap>
-                    <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Funding</span>
-                  </NavLink>
+                      {/* ---------------- VOLUNTEER MENU ---------------- */}
+                      {role === "volunteer" && (
+                        <>
+                          <NavLink to="/dashboard/all-blood-donation-request" className={navClass} title="All Donation Requests">
+                            <IconWrap><RequestIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Donation Request</span>
+                          </NavLink>
 
-                  <NavLink to="/dashboard/All-funding" className={navClass} title="All Funding">
-                    <IconWrap><MoneyIcon /></IconWrap>
-                    <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Funding</span>
-                  </NavLink>
+                          <NavLink to="/dashboard/All-funding" className={navClass} title="All Funding">
+                            <IconWrap><MoneyIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Funding</span>
+                          </NavLink>
+                        </>
+                      )}
 
-                  <NavLink to="/dashboard/all-users" className={navClass} title="All Users">
-                    <IconWrap><PeopleIcon /></IconWrap>
-                    <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Users</span>
-                  </NavLink>
+                      {/* ---------------- ADMIN MENU ---------------- */}
+                      {role === "admin" && (
+                        <>
+                          <NavLink to="/dashboard/all-users" className={navClass} title="All Users">
+                            <IconWrap><PeopleIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Users</span>
+                          </NavLink>
+
+                          <NavLink to="/dashboard/all-blood-donation-request" className={navClass} title="All Donation Requests">
+                            <IconWrap><RequestIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Donation Request</span>
+                          </NavLink>
+
+                          <NavLink to="/dashboard/All-funding" className={navClass} title="All Funding">
+                            <IconWrap><MoneyIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Funding</span>
+                          </NavLink>
+
+                          {/* (optional) admin can also create/manage their own */}
+                          <NavLink to="/dashboard/creatDonerRequest" className={navClass} title="Create Donation Request">
+                            <IconWrap><PlusDropIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Create Donation Request</span>
+                          </NavLink>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -205,31 +254,29 @@ const DashboardLayout = () => {
               <div className="pt-4">
                 <div className="h-px bg-indigo-100 mb-3" />
 
-            <Link to={"/dashboard/profile"}>
-            
-                <div
-                  className={`flex items-center gap-3 rounded-xl px-3 py-3 bg-white/60 border border-indigo-100 ${
-                    collapsed ? "justify-center" : ""
-                  }`}
-                >
-                  {user?.photoURL ? (
-                    <img className="h-10 w-10 rounded-full object-cover" src={user.photoURL} alt="avatar" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-indigo-100 grid place-items-center font-bold text-indigo-700">
-                      {user?.displayName?.[0] || "U"}
-                    </div>
-                  )}
+                <Link to={"/dashboard/profile"}>
+                  <div
+                    className={`flex items-center gap-3 rounded-xl px-3 py-3 bg-white/60 border border-indigo-100 ${
+                      collapsed ? "justify-center" : ""
+                    }`}
+                  >
+                    {user?.photoURL ? (
+                      <img className="h-10 w-10 rounded-full object-cover" src={user.photoURL} alt="avatar" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-indigo-100 grid place-items-center font-bold text-indigo-700">
+                        {user?.displayName?.[0] || "U"}
+                      </div>
+                    )}
 
-                  <div className={`${collapsed ? "hidden" : "block"} min-w-0`}>
-                    <p className="text-xs text-slate-500">Signed in as</p>
-                    <p className="text-sm font-semibold text-slate-800 truncate">
-                      {user?.displayName || "User"}
-                    </p>
-                    <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                    <div className={`${collapsed ? "hidden" : "block"} min-w-0`}>
+                      <p className="text-xs text-slate-500">Signed in as</p>
+                      <p className="text-sm font-semibold text-slate-800 truncate">
+                        {user?.displayName || "User"}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                    </div>
                   </div>
-                </div>
-            
-            </Link>
+                </Link>
 
                 <button
                   onClick={handleLogout}

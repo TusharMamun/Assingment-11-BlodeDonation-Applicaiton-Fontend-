@@ -6,21 +6,18 @@ const useUserRole = () => {
   const { user, loading } = useAuth();
   const axiosSecure = useAxiosSecure();
 
+  const { data: role ="donor", isLoading: IsRoleLoadding } = useQuery({
+    enabled: !loading && !!user?.email,
+    queryKey: ["role", user?.email],
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(
+        `/regesterDoner/${encodeURIComponent(user.email)}/role`
+      );
+      return data?.role; // returns role
+    },
+  });
 
-
-  const {data:role,isLoading:IsRoleLoadding} =useQuery(
-    {
-      enabled:!loading && !!user?.email,
-      queryKey:["role",user?.email],
-
-
-      queryFn:async()=>{
-        const {data} =await axiosSecure(`/regesterDoner/role/${user.email}`)
-        return data.role
-      }
-    }
-  )
-return [role,IsRoleLoadding]
+  return [role, IsRoleLoadding];
 };
 
 export default useUserRole;

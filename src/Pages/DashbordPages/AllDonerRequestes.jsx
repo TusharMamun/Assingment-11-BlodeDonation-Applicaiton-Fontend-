@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import useUserRole from "../../Hooks/useUserRole";
 import useAuth from "../../Hooks/useAuth";
+import Loading from "../../components/Uicomponent/Loadding";
 
 const STATUSES = ["", "inprogress", "pending", "approved", "done", "cancelled"];
 const BLOOD = ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -116,7 +117,7 @@ const AllDonerRequestes = () => {
   };
 
   if (roleLoading || isLoading) {
-    return <div className="p-10 text-center text-slate-500">Loading...</div>;
+    return <Loading></Loading>;
   }
   if (isError) {
     return (

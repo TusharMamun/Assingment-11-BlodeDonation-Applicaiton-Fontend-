@@ -14,6 +14,8 @@ useEffect(()=>{
   // interceptors request
   AxiosSecure.interceptors.request.use(config=>{
     config.headers.Authorization =`Bearer ${user?.accessToken}`
+
+    
     return  config
   },[user])
 })

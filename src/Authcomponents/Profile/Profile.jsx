@@ -6,6 +6,7 @@ import useUserRole from "../../Hooks/useUserRole";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
+import Loading from "../../components/Uicomponent/Loadding";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -110,7 +111,8 @@ const Profile = () => {
               <div className="rounded-2xl border bg-slate-50 p-4">
                 <p className="text-xs text-slate-500">Role</p>
                 <p className="font-semibold text-slate-900">
-                  {isRoleLoading ? "Loading..." : role || Profil?.role || "—"}
+            
+                  {isRoleLoading ? <Loading></Loading>:role || Profil?.role || "—"}
                 </p>
               </div>
 
