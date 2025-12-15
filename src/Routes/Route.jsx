@@ -18,6 +18,9 @@ import DonationRequestDetails from "../Pages/DashbordPages/DonationRequestDetail
 import PaymentSuccess from "../Pages/Funding/PaymentSuccess";
 import DashboardHome from "../components/layout/DashboardPages/DashboardHome";
 import UpdateDonationRequest from "../Pages/DonationRequest/UPdateRequest";
+import SerchDonation from "../Pages/Funding/SerchDonation";
+import MyFundingPage from "../Pages/Funding/MyFundingPage";
+import AllFunding from "../Pages/DashbordPages/AllFundinData";
 
 
 
@@ -69,6 +72,13 @@ element:<PaymentSuccess></PaymentSuccess>
         loader:()=>fetch("/LocationData.json")
 
 
+      },
+      {
+        path:'/search-donors',
+        Component:SerchDonation,
+        loader:()=>fetch("/LocationData.json")
+
+
       }
     ],
 
@@ -106,6 +116,16 @@ element:<AllDonerRequestes></AllDonerRequestes>
       {
 path:"/dashboard/my-donation-requests",
 element:<MyDonationPage></MyDonationPage>
+
+      } ,
+      {
+path:"/dashboard/All-funding",
+element:<AllFunding></AllFunding>
+
+      } ,
+      {
+path:"/dashboard/mydonation",
+element:<MyFundingPage></MyFundingPage>
 
       } ,
       {
