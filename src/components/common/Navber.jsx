@@ -105,7 +105,7 @@ const Navbar = () => {
                 {/* User (only if logged in) */}
                 {user && (
                   <>
-                    <li className="mt-2 opacity-70 px-2 text-xs">User</li>
+                    <li className="mt-2 opacity-70 px-2 text-xs"></li>
                     {avatarMenu.map((m) => (
                       <li key={m.key}>
                         <NavLink to={m.to}>{m.label}</NavLink>

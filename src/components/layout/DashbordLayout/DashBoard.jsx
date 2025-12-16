@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../Hooks/useAuth";
 import useUserRole from "../../../Hooks/useUserRole";
+import AdminFooter from "../../common/AdminFooter";
 
 /* ---------- styles ---------- */
 const navClass = ({ isActive }) =>
@@ -127,6 +128,9 @@ const DashboardLayout = () => {
           {/* Content */}
           <main className="p-4 sm:p-6 lg:p-8">
             <Outlet />
+            <AdminFooter>
+              
+            </AdminFooter>
           </main>
         </div>
 

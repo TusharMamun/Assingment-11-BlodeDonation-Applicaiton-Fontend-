@@ -17,10 +17,7 @@ const Regestration = () => {
   const location = useLocation();
 
   // ✅ redirect target (PrivateRoute should send: state={{ from: location }})
-  const redirectTo =
-    location.state?.from?.pathname ||
-    location.state?.pathname || // fallback (if you set state differently somewhere)
-    "/dashboard"; // ✅ default after signup
+  const redirectTo = location.state?.from?.pathname || "/dashboard";
 
   const bloodGroups = useMemo(
     () => ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
@@ -88,15 +85,15 @@ const Regestration = () => {
       // 1) upload image
       const photoURL = await imageUpload(imageFile);
 
-      // 2) create user
-      await createUser(email, password);
+    
 
       // 3) update profile
       await updateUserProfile({
         displayName: name,
         photoURL: photoURL || "",
       });
-
+  // 2) create user
+      await createUser(email, password);
       // 4) save donor to DB
       const donorPayload = {
         email,
@@ -120,6 +117,9 @@ const Regestration = () => {
       });
 
       reset();
+
+      // ✅ small wait so firebase user state is ready (prevents redirect back to login)
+      await new Promise((r) => setTimeout(r, 300));
 
       // ✅ redirect after success
       navigate(redirectTo, { replace: true });
@@ -147,13 +147,17 @@ const Regestration = () => {
     }
   };
 
-  if (pageLoading) return <Loading label="Uploading photo & creating account..." />;
+  if (pageLoading)
+    return <Loading label="Uploading photo & creating account..." />;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-base-200">
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="rounded-2xl bg-base-100 p-7 shadow">
-          <form className="space-y-4" onSubmit={handleSubmit(hendelRegestration)}>
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(hendelRegestration)}
+          >
             <div className="flex items-end justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-extrabold">Registration</h2>
@@ -222,14 +226,20 @@ const Regestration = () => {
             <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Profile Picture</span>
-                  <span className="label-text-alt text-base-content/60">upload</span>
+                  <span className="label-text font-medium">
+                    Profile Picture
+                  </span>
+                  <span className="label-text-alt text-base-content/60">
+                    upload
+                  </span>
                 </div>
                 <input
                   type="file"
                   className="file-input file-input-bordered w-full"
                   accept="image/*"
-                  {...register("ProfileImage", { required: "Profile image is required" })}
+                  {...register("ProfileImage", {
+                    required: "Profile image is required",
+                  })}
                 />
                 {errors.ProfileImage && (
                   <div className="label">
@@ -251,7 +261,9 @@ const Regestration = () => {
                   errors.bloodGroup ? "select-error" : ""
                 }`}
                 defaultValue=""
-                {...register("bloodGroup", { required: "Blood group is required" })}
+                {...register("bloodGroup", {
+                  required: "Blood group is required",
+                })}
               >
                 <option value="" disabled>
                   Select blood group
@@ -283,7 +295,9 @@ const Regestration = () => {
                     errors.district ? "select-error" : ""
                   }`}
                   defaultValue=""
-                  {...register("district", { required: "District is required" })}
+                  {...register("district", {
+                    required: "District is required",
+                  })}
                 >
                   <option value="" disabled>
                     Select district
@@ -368,7 +382,11 @@ const Regestration = () => {
                     onClick={() => setShowPassword((p) => !p)}
                     className="btn btn-ghost btn-sm absolute right-1 top-1/2 -translate-y-1/2"
                   >
-                    {showPassword ?  <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                    {showPassword ? (
+                      <AiOutlineEyeInvisible />
+                    ) : (
+                      <AiOutlineEye />
+                    )}
                   </button>
                 </div>
 
@@ -383,7 +401,9 @@ const Regestration = () => {
 
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Confirm Password</span>
+                  <span className="label-text font-medium">
+                    Confirm Password
+                  </span>
                 </div>
 
                 <div className="relative">
@@ -395,7 +415,8 @@ const Regestration = () => {
                     }`}
                     {...register("confirmPassword", {
                       required: "Confirm password is required",
-                      validate: (value) => value === password || "Password does not match",
+                      validate: (value) =>
+                        value === password || "Password does not match",
                     })}
                   />
                   <button
@@ -403,7 +424,12 @@ const Regestration = () => {
                     onClick={() => setShowConfirm((p) => !p)}
                     className="btn btn-ghost btn-sm absolute right-1 top-1/2 -translate-y-1/2"
                   >
-           {showPassword ?  <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                    {/* ✅ FIX: use showConfirm (not showPassword) */}
+                    {showConfirm ? (
+                      <AiOutlineEyeInvisible />
+                    ) : (
+                      <AiOutlineEye />
+                    )}
                   </button>
                 </div>
 
