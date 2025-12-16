@@ -208,14 +208,25 @@ const DashboardLayout = () => {
                       {/* ---------------- VOLUNTEER MENU ---------------- */}
                       {role === "volunteer" && (
                         <>
+
+   <NavLink to="/dashboard/my-donation-requests" className={navClass} title="My Donation Requests">
+                            <IconWrap><RequestIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Donation Requests</span>
+                          </NavLink>
+
+
                           <NavLink to="/dashboard/all-blood-donation-request" className={navClass} title="All Donation Requests">
                             <IconWrap><RequestIcon /></IconWrap>
                             <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Donation Request</span>
                           </NavLink>
+                                <NavLink to="/dashboard/creatDonerRequest" className={navClass} title="Create Donation Request">
+                            <IconWrap><PlusDropIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Create Donation Request</span>
+                          </NavLink>
 
-                          <NavLink to="/dashboard/All-funding" className={navClass} title="All Funding">
+                          <NavLink to="/dashboard/mydonation" className={navClass} title="My Funding">
                             <IconWrap><MoneyIcon /></IconWrap>
-                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Funding</span>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Funding</span>
                           </NavLink>
                         </>
                       )}
@@ -223,6 +234,10 @@ const DashboardLayout = () => {
                       {/* ---------------- ADMIN MENU ---------------- */}
                       {role === "admin" && (
                         <>
+                         <NavLink to="/dashboard/mydonation" className={navClass} title="My Funding">
+                            <IconWrap><MoneyIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Funding</span>
+                          </NavLink>
                           <NavLink to="/dashboard/all-users" className={navClass} title="All Users">
                             <IconWrap><PeopleIcon /></IconWrap>
                             <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Users</span>
@@ -231,6 +246,10 @@ const DashboardLayout = () => {
                           <NavLink to="/dashboard/all-blood-donation-request" className={navClass} title="All Donation Requests">
                             <IconWrap><RequestIcon /></IconWrap>
                             <span className={`${collapsed ? "hidden" : "block"} font-medium`}>All Donation Request</span>
+                          </NavLink>
+                                  <NavLink to="/dashboard/my-donation-requests" className={navClass} title="My Donation Requests">
+                            <IconWrap><RequestIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>My Donation Requests</span>
                           </NavLink>
 
                           <NavLink to="/dashboard/All-funding" className={navClass} title="All Funding">

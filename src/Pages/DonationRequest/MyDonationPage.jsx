@@ -1,17 +1,30 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
-import { FiTrash2, FiChevronLeft, FiChevronRight, FiEye, FiEdit } from "react-icons/fi";
+import {
+  FiTrash2,
+  FiChevronLeft,
+  FiChevronRight,
+  FiEye,
+  FiEdit,
+} from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../Hooks/useAuth";
 import useAxiosSecure from "../../Hooks/useAxiosSecure";
+import Loading from "../../components/Uicomponent/Loadding";
 
 const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
 const normalizeResponse = (payload, fallbackPage, fallbackLimit) => {
   if (Array.isArray(payload)) {
     const total = payload.length;
-    return { result: payload, total, page: 1, limit: total || fallbackLimit, totalPages: 1 };
+    return {
+      result: payload,
+      total,
+      page: 1,
+      limit: total || fallbackLimit,
+      totalPages: 1,
+    };
   }
 
   const result = Array.isArray(payload?.result) ? payload.result : [];
@@ -32,7 +45,8 @@ const badgeClass = (status) => {
   if (st === "pending") return "badge badge-warning badge-outline";
   if (st === "inprogress") return "badge badge-info badge-outline";
   if (st === "done") return "badge badge-success badge-outline";
-  if (st === "canceled" || st === "cancelled") return "badge badge-error badge-outline";
+  if (st === "canceled" || st === "cancelled")
+    return "badge badge-error badge-outline";
   return "badge badge-ghost badge-outline";
 };
 
@@ -42,18 +56,40 @@ const MyDonationRequests = () => {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(""); // ✅ added
   const [status, setStatus] = useState("pending");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  useEffect(() => setPage(1), [status, search, limit]);
+  // ✅ debounce search (fixes page reset/refetch on every keypress)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  const { data: normalized, isLoading, isError, error, refetch, isFetching } = useQuery({
+  // ✅ reset page only when filters really change (not on every keypress)
+  useEffect(() => setPage(1), [status, debouncedSearch, limit]);
+
+  const {
+    data: normalized,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     enabled: !loading && !!user?.email,
-    queryKey: ["myDonationRequests", user?.email, status, search, page, limit],
+    queryKey: [
+      "myDonationRequests",
+      user?.email,
+      status,
+      debouncedSearch,
+      page,
+      limit,
+    ],
     queryFn: async () => {
       const res = await axiosSecure.get("/my-blood-donation-requests", {
-        params: { email: user.email, status, search, page, limit },
+        params: { email: user.email, status, search: debouncedSearch, page, limit },
       });
       return normalizeResponse(res.data, page, limit);
     },
@@ -67,7 +103,8 @@ const MyDonationRequests = () => {
   useEffect(() => {
     if (!normalized) return;
     const safe = clamp(page, 1, totalPages);
-    if (safe !== page) setPage(safe);
+    if (safe !== page)
+       setPage(safe);
   }, [normalized, page, totalPages]);
 
   const pageButtons = useMemo(() => {
@@ -127,7 +164,7 @@ const MyDonationRequests = () => {
     }
   };
 
-  if (loading || isLoading) return <div className="p-6">Loading...</div>;
+  if (loading || isLoading) return <Loading></Loading>;
   if (isError) return <div className="p-6">Error: {error?.message}</div>;
 
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -137,14 +174,19 @@ const MyDonationRequests = () => {
     <div className="p-4 sm:p-6">
       <div className="mb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-900">My Donation Requests</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900">
+            My Donation Requests
+          </h2>
           <p className="text-sm text-slate-500">
             Showing {from}-{to} of {total} {isFetching ? " • Updating..." : ""}
           </p>
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => refetch()} className="btn btn-outline btn-sm rounded-xl">
+          <button
+            onClick={() => refetch()}
+            className="btn btn-outline btn-sm rounded-xl"
+          >
             Refresh
           </button>
           <button
@@ -216,20 +258,29 @@ const MyDonationRequests = () => {
               </tr>
             ) : (
               rows.map((r) => {
-                const st = String(r?.status || "").toLowerCase() === "cancelled" ? "canceled" : String(r?.status || "").toLowerCase();
+                const st =
+                  String(r?.status || "").toLowerCase() === "cancelled"
+                    ? "canceled"
+                    : String(r?.status || "").toLowerCase();
                 const isPending = st === "pending";
 
                 return (
                   <tr key={r._id} className="hover">
                     <td>
                       <div className="leading-tight">
-                        <div className="font-bold text-slate-900">{r.recipientName || "—"}</div>
-                        <div className="text-xs text-slate-500">{r.hospitalName || "—"}</div>
+                        <div className="font-bold text-slate-900">
+                          {r.recipientName || "—"}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {r.hospitalName || "—"}
+                        </div>
                       </div>
                     </td>
 
                     <td>
-                      {[r.recipientUpazila, r.recipientDistrict].filter(Boolean).join(", ") || "—"}
+                      {[r.recipientUpazila, r.recipientDistrict]
+                        .filter(Boolean)
+                        .join(", ") || "—"}
                     </td>
 
                     <td className="font-bold">{r.bloodGroup || "—"}</td>
@@ -242,7 +293,6 @@ const MyDonationRequests = () => {
 
                     <td className="text-right">
                       <div className="flex flex-wrap gap-2 justify-end">
-                        {/* ✅ Always show View */}
                         <button
                           type="button"
                           onClick={() => navigate(`/donation-requests/${r._id}`)}
@@ -251,7 +301,6 @@ const MyDonationRequests = () => {
                           <FiEye /> View
                         </button>
 
-                        {/* ✅ Only pending: Edit + Delete */}
                         {isPending && (
                           <>
                             <button
@@ -299,13 +348,18 @@ const MyDonationRequests = () => {
           <div className="join">
             {pageButtons.map((p, idx) =>
               p === "..." ? (
-                <button key={`${p}-${idx}`} className="btn btn-sm join-item btn-disabled">
+                <button
+                  key={`${p}-${idx}`}
+                  className="btn btn-sm join-item btn-disabled"
+                >
                   ...
                 </button>
               ) : (
                 <button
                   key={p}
-                  className={`btn btn-sm join-item ${page === p ? "btn-primary" : "btn-outline"}`}
+                  className={`btn btn-sm join-item ${
+                    page === p ? "btn-primary" : "btn-outline"
+                  }`}
                   onClick={() => setPage(p)}
                 >
                   {p}

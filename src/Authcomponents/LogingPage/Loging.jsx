@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import useAuth from "../../Hooks/useAuth";
 
-const Loging = () => {
+const loging = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -224,4 +224,4 @@ const Loging = () => {
   );
 };
 
-export default Loging;
+export default loging;

@@ -12,10 +12,14 @@ const BLOOD = ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const AllDonerRequestes = () => {
   const axiosSecure = useAxiosSecure();
-  const {user} =useAuth()
+  const { user } = useAuth();
   const [myRole, roleLoading] = useUserRole(); // "admin" | "volunteer" | "donor"
+
   const isVolunteer = myRole === "volunteer";
   const isAdmin = myRole === "admin";
+
+  // ✅ both can manage action
+  const canManageAction = isAdmin || isVolunteer;
 
   const [status, setStatus] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
@@ -36,18 +40,11 @@ const AllDonerRequestes = () => {
     [status, bloodGroup, debouncedSearch, page]
   );
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     enabled: !roleLoading,
     queryKey: ["blood-donation-requests", params],
     queryFn: async () => {
-      const res = await axiosSecure.get("/blood-donation-requests", { params});
+      const res = await axiosSecure.get("/blood-donation-requests", { params });
       return res.data; // {result,total,page,totalPages}
     },
     keepPreviousData: true,
@@ -59,10 +56,10 @@ const AllDonerRequestes = () => {
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }) => {
       const res = await axiosSecure.patch(
-  `/blood-donation-requests/${id}/status`,
-  { status },
-  { headers: { "x-user-email": user?.email } }
-);
+        `/blood-donation-requests/${id}/status`,
+        { status },
+        { headers: { "x-user-email": user?.email } }
+      );
       return res.data;
     },
     onSuccess: () => {
@@ -98,9 +95,9 @@ const AllDonerRequestes = () => {
     setPage(1);
   };
 
-  // ✅ confirm before updating (admin only)
+  // ✅ confirm before updating (admin + volunteer) — other conditions same
   const confirmStatusChange = async (id, nextStatus) => {
-    if (!isAdmin) return;
+    if (!canManageAction) return;
 
     const result = await Swal.fire({
       title: "Confirm update?",
@@ -136,8 +133,7 @@ const AllDonerRequestes = () => {
             All Blood Donation Requests
           </h2>
           <p className="text-sm text-slate-500">
-            {isVolunteer ? "Volunteer view: cannot update status." : ""}
-            {!isAdmin ? " Donor/Volunteer cannot change status." : ""}
+            {!canManageAction ? "Donor cannot change status." : ""}
             {isFetching ? " • Updating..." : ""}
           </p>
         </div>
@@ -234,9 +230,9 @@ const AllDonerRequestes = () => {
               </tr>
             ) : (
               list.map((r) => {
-                const canUpdateNow = r.status === "inprogress"; // match your backend rule
+                const canUpdateNow = r.status === "inprogress"; // ✅ same rule
                 const disableSelect =
-                  !isAdmin || !canUpdateNow || statusMutation.isPending;
+                  !canManageAction || !canUpdateNow || statusMutation.isPending;
 
                 return (
                   <tr key={r._id}>
@@ -271,8 +267,8 @@ const AllDonerRequestes = () => {
 
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Admin can view */}
-                        {isAdmin && (
+                        {/* ✅ Admin + Volunteer can view (UI same) */}
+                        {canManageAction && (
                           <Link
                             to={`/donation-requests/${r._id}`}
                             className="btn btn-primary btn-sm rounded-xl"
@@ -281,30 +277,29 @@ const AllDonerRequestes = () => {
                           </Link>
                         )}
 
-                        {/* ✅ Only admin can change status */}
+                        {/* ✅ Admin + Volunteer can change status (UI same) */}
                         <select
                           className="select select-bordered select-sm rounded-xl bg-white"
                           value={r.status || ""}
                           disabled={disableSelect}
                           onChange={(e) => {
-                            if (!isAdmin) return; // extra safety
+                            if (!canManageAction) return;
                             confirmStatusChange(r._id, e.target.value);
                           }}
                           title={
-                            !isAdmin
-                              ? "Only admin can update status"
+                            !canManageAction
+                              ? "Only admin/volunteer can update status"
                               : !canUpdateNow
                               ? "Can update only when status is inprogress"
                               : "Update status"
                           }
                         >
-                          {/* show current status (so select shows correct value) */}
                           <option value={r.status || ""} disabled>
                             {r.status || "—"}
                           </option>
 
-                          {/* only show update options for admin + inprogress */}
-                          {isAdmin && canUpdateNow && (
+                          {/* ✅ same options + same condition */}
+                          {canManageAction && canUpdateNow && (
                             <>
                               <option value="done">done</option>
                               <option value="cancelled">cancelled</option>

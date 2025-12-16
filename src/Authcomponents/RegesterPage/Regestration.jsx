@@ -1,11 +1,12 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useLoaderData, useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import useAuth from "../../Hooks/useAuth";
+import useAxiosSecure from "../../Hooks/useAxiosSecure";
 import Loading from "../../components/Uicomponent/Loadding";
 import { imageUpload } from "../../utils";
-import Swal from "sweetalert2";
-import useAxiosSecure from "../../Hooks/useAxiosSecure";
 
 const Regestration = () => {
   const { createUser, updateUserProfile } = useAuth();
@@ -367,7 +368,7 @@ const Regestration = () => {
                     onClick={() => setShowPassword((p) => !p)}
                     className="btn btn-ghost btn-sm absolute right-1 top-1/2 -translate-y-1/2"
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword ?  <AiOutlineEyeInvisible /> : <AiOutlineEye />}
                   </button>
                 </div>
 
@@ -402,7 +403,7 @@ const Regestration = () => {
                     onClick={() => setShowConfirm((p) => !p)}
                     className="btn btn-ghost btn-sm absolute right-1 top-1/2 -translate-y-1/2"
                   >
-                    {showConfirm ? "Hide" : "Show"}
+           {showPassword ?  <AiOutlineEyeInvisible /> : <AiOutlineEye />}
                   </button>
                 </div>
 
