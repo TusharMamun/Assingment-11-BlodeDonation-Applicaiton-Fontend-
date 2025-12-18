@@ -266,6 +266,10 @@ const DashboardLayout = () => {
                             <IconWrap><PlusDropIcon /></IconWrap>
                             <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Create Donation Request</span>
                           </NavLink>
+                          <NavLink to="/dashboard/Analysys-donation-status" className={navClass} title="Analysys DonaerRequest">
+                            <IconWrap><PlusDropIcon /></IconWrap>
+                            <span className={`${collapsed ? "hidden" : "block"} font-medium`}>Analysys DonaerRequest</span>
+                          </NavLink>
                         </>
                       )}
                     </>

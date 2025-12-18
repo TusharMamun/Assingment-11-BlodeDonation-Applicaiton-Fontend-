@@ -4,11 +4,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import useAuth from "../../Hooks/useAuth";
 
-const loging = () => {
+const Login = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -33,11 +32,12 @@ const loging = () => {
         showConfirmButton: false,
       });
 
-      navigate(from, { replace: true });
+      const redirectTo = location.state?.from?.pathname || "/";    
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       console.log("Login error:", err?.message);
 
-      Swal.fire({
+      await Swal.fire({
         icon: "error",
         title: "Login failed!",
         text: err?.message || "Invalid email or password",
@@ -149,7 +149,7 @@ const loging = () => {
                 )}
               </label>
 
-              {/* Password (Show/Hide) */}
+              {/* Password */}
               <label className="form-control w-full">
                 <div className="label">
                   <span className="label-text font-medium">Password</span>
@@ -187,7 +187,7 @@ const loging = () => {
                 )}
               </label>
 
-              {/* Remember me */}
+              {/* Remember me (UI only unless you implement persistence) */}
               <div className="flex items-center justify-between gap-3">
                 <label className="label cursor-pointer gap-2 p-0">
                   <input
@@ -212,7 +212,7 @@ const loging = () => {
 
               <p className="text-center text-sm text-base-content/70">
                 Don’t have an account?{" "}
-                  <Link to="/regester" className="link link-primary" >
+                <Link to="/regester" className="link link-primary">
                   Register
                 </Link>
               </p>
@@ -224,4 +224,4 @@ const loging = () => {
   );
 };
 
-export default loging;
+export default Login;

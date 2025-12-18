@@ -1,9 +1,12 @@
 import { useMemo } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../../Hooks/useAuth";
+import Loading from "../Uicomponent/Loadding";
+
 
 const Navbar = () => {
-  const { logOut, user } = useAuth();
+  const {user, logOut, loading } =useAuth()
+  console.log(user)
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -14,7 +17,7 @@ const Navbar = () => {
       console.log("Logout error:", err?.message);
     }
   };
-
+if(loading) return <Loading></Loading>
   const navClass = ({ isActive }) =>
     [
       "px-3 py-2 rounded-none !bg-transparent font-semibold tracking-wide text-sm uppercase",

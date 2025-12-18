@@ -17,7 +17,7 @@ import SerchDonation from "../Pages/Funding/SerchDonation";
 import Profile from "../Authcomponents/Profile/Profile";
 import UpdateProfile from "../Authcomponents/Profile/UpdateProfile";
 import Regestration from "../Authcomponents/RegesterPage/Regestration";
-import loging from "../Authcomponents/logingPage/loging";
+
 
 import AllUser from "../Pages/DashbordPages/AllUser";
 import AllDonerRequestes from "../Pages/DashbordPages/AllDonerRequestes";
@@ -32,6 +32,9 @@ import NotFoundPage from "../Pages/NotFoundPage";
 import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
 import PrivateVolunteerRoute from "./PrivateVolunteerRoute";
+import Login from "../Authcomponents/LogingPage/Loging";
+import AnalysysDonationRequest from "../Pages/DashbordPages/AnalysysDonationRequest";
+import PaymentCancel from "../Pages/Funding/PaymentCancel";
 
 export const router = createBrowserRouter([
   {
@@ -86,8 +89,16 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+      {
+        path: "/dashboard/payment-cancel",
+        element: (
+          <PrivateRoute>
+          <PaymentCancel></PaymentCancel>
+          </PrivateRoute>
+        ),
+      },
 
-      { path: "/loging", Component: loging },
+      { path: "/loging", Component:Login  },
 
       {
         path: "/regester",
@@ -112,7 +123,8 @@ export const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      { index: true, element: <DashboardHome /> },
+      { path:"/dashboard", 
+        element: <DashboardHome /> },
 
       { path: "/dashboard/profile", element: <Profile /> },
 
@@ -138,6 +150,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateVolunteerRoute>
             <AllDonerRequestes />
+          </PrivateVolunteerRoute>
+        ),
+      },
+      {
+        path: "/dashboard/Analysys-donation-status",
+        element: (
+          <PrivateVolunteerRoute>
+       <AnalysysDonationRequest></AnalysysDonationRequest>
           </PrivateVolunteerRoute>
         ),
       },

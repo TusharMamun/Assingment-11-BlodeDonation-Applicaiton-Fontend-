@@ -83,17 +83,27 @@ const Regestration = () => {
       setPageLoading(true);
 
       // 1) upload image
-      const photoURL = await imageUpload(imageFile);
+const photoURL = await imageUpload(imageFile);
 
-    
+// 2) create user
+createUser(email, password)
+  .then(async () => {
+    // 3) make profile object
+    const userProfile = {
+      displayName: name,
+      photoURL: photoURL || "",
+    };
 
-      // 3) update profile
-      await updateUserProfile({
-        displayName: name,
-        photoURL: photoURL || "",
-      });
+    // 4) update profile
+    return updateUserProfile(userProfile);
+  })
+  .then(() => {
+    // ✅ redirect after profile update
+    navigate(location.state || "/");
+  })
+  .catch((error) => console.log(error));
   // 2) create user
-      await createUser(email, password);
+   
       // 4) save donor to DB
       const donorPayload = {
         email,
@@ -122,7 +132,7 @@ const Regestration = () => {
       await new Promise((r) => setTimeout(r, 300));
 
       // ✅ redirect after success
-      navigate(redirectTo, { replace: true });
+
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
