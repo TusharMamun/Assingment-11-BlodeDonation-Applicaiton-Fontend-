@@ -82,11 +82,11 @@ export default function BloodCompatibilityViz() {
   };
 
   return (
-    <div className="w-full bg-[#f7f7f7] font-sans overflow-x-hidden rounded-3xl border shadow-sm">
+    <div className="w-full bg-base-100 font-sans overflow-x-hidden rounded-3xl border border-base-300 shadow-sm">
       <style>{css}</style>
 
       <div id="content" className="mx-auto">
-        <h3 className="text-slate-900 font-bold">Select the donor blood type:</h3>
+        <h3 className="text-base-content font-bold">Select the donor blood type:</h3>
 
         <div id="blood_selector" role="list">
           {ORDER.map((bt) => (
@@ -147,98 +147,333 @@ export default function BloodCompatibilityViz() {
 }
 
 const css = `
-  #content { position: relative; margin: 30px auto; width: 600px; height: 600px; }
-  h3 { position: absolute; top: 0; left: 0; }
+  #content { 
+    position: relative; 
+    margin: 30px auto; 
+    width: 600px; 
+    height: 600px; 
+  }
+  
+  h3 { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    color: hsl(var(--bc));
+  }
 
   #blood_selector{
-    display:grid; grid-template-columns:repeat(4,1fr);
-    grid-template-rows:1fr 1fr; grid-gap:5px;
-    width:200px; height:100px; position:absolute; left:10px; top:45px; z-index:2;
+    display:grid; 
+    grid-template-columns:repeat(4,1fr);
+    grid-template-rows:1fr 1fr; 
+    grid-gap:5px;
+    width:200px; 
+    height:100px; 
+    position:absolute; 
+    left:10px; 
+    top:45px; 
+    z-index:2;
   }
+  
   #blood_selector div{
-    user-select:none; display:flex; align-items:center; justify-content:center;
-    background-color:#f7f7f7; border:1px solid #b51e23; border-radius:25%; outline:none;
+    user-select:none; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center;
+    background-color: hsl(var(--b1)); 
+    border: 1px solid #b51e23; 
+    border-radius:25%; 
+    outline:none;
+    color: hsl(var(--bc));
+    transition: all 0.2s ease;
   }
-  #blood_selector div:hover{ border:1px solid #1da1f2; font-weight:bold; cursor:pointer; }
+  
+  #blood_selector div:hover{ 
+    border: 1px solid #1da1f2; 
+    font-weight:bold; 
+    cursor:pointer;
+    background-color: hsl(var(--b2));
+  }
+  
   .resetBtn{
-    position:absolute; left:10px; top:155px; z-index:3; padding:8px 12px;
-    border-radius:12px; border:1px solid rgba(0,0,0,0.12); background:white; cursor:pointer;
+    position:absolute; 
+    left:10px; 
+    top:155px; 
+    z-index:3; 
+    padding:8px 12px;
+    border-radius:12px; 
+    border: 1px solid hsl(var(--bc) / 0.2); 
+    background: hsl(var(--b1)); 
+    cursor:pointer;
+    color: hsl(var(--bc));
+    font-weight: 500;
+    transition: all 0.2s ease;
   }
-  #blood_content{ position:absolute; top:50px; width:100%; height:100%; }
-  #center_via_c{ position:absolute; z-index:1; width:100%; height:100%; }
+  
+  .resetBtn:hover {
+    background: hsl(var(--b2));
+    border-color: hsl(var(--bc) / 0.3);
+  }
+  
+  #blood_content{ 
+    position:absolute; 
+    top:50px; 
+    width:100%; 
+    height:100%; 
+  }
+  
+  #center_via_c{ 
+    position:absolute; 
+    z-index:1; 
+    width:100%; 
+    height:100%; 
+  }
+  
   #center_via_c .center_via{
-    width:8px; background:#ccc; height:200px; position:absolute; left:304px; top:276px;
+    width:8px; 
+    background:#ccc; 
+    height:200px; 
+    position:absolute; 
+    left:304px; 
+    top:276px;
   }
+  
   #center_via_c .blood_via{
-    height:0; background-color:#b51e23; right:50%; width:8px; transition:height .25s;
+    height:0; 
+    background-color:#b51e23; 
+    right:50%; 
+    width:8px; 
+    transition:height .25s;
   }
+  
   .bar{
-    position: fixed; right:0; top:55px; width:55%; height:8px;
-    border-radius:2px 0 0 2px; background-color:#ccc;
+    position: fixed; 
+    right:0; 
+    top:55px; 
+    width:55%; 
+    height:8px;
+    border-radius:2px 0 0 2px; 
+    background-color:#ccc;
   }
+  
   .main_bag{
-    position:absolute; width:100px; height:140px; top:70px; left:250px;
-    border-radius:30px; opacity:.8; background-color:rgba(154,207,234,.9);
+    position:absolute; 
+    width:100px; 
+    height:140px; 
+    top:70px; 
+    left:250px;
+    border-radius:30px; 
+    opacity:.8; 
+    background-color:rgba(154,207,234,.9);
     border:8px solid rgba(154,207,234,.9);
   }
+  
   .main_bag .blood{
-    position:absolute; left:0; bottom:0; width:100%;
-    background-color:#b51e23; border-radius:0 0 35px 35px; transition:height 1s;
+    position:absolute; 
+    left:0; 
+    bottom:0; 
+    width:100%;
+    background-color:#b51e23; 
+    border-radius:0 0 35px 35px; 
+    transition:height 1s;
   }
+  
   .main_bag .blood::before{
-    content:""; position:absolute; top:-6px; width:100%; height:10px;
-    background-color:#92191b; border-radius:100%;
+    content:""; 
+    position:absolute; 
+    top:-6px; 
+    width:100%; 
+    height:10px;
+    background-color:#92191b; 
+    border-radius:100%;
   }
+  
   .main_bag::before{
-    content:""; position:absolute; top:-118px; left:45%; width:10%; height:110px; background-color:#ccc;
+    content:""; 
+    position:absolute; 
+    top:-118px; 
+    left:45%; 
+    width:10%; 
+    height:110px; 
+    background-color:#ccc;
   }
+  
   #humans{
-    position:absolute; top:276px; width:400px; height:200px; left:108px;
-    display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(4,1fr);
+    position:absolute; 
+    top:276px; 
+    width:400px; 
+    height:200px; 
+    left:108px;
+    display:grid; 
+    grid-template-columns:1fr 1fr; 
+    grid-template-rows:repeat(4,1fr);
   }
-  #humans .human{ position:relative; }
+  
+  #humans .human{ 
+    position:relative; 
+  }
+  
   #humans .human .via{
-    position:absolute; width:100%; height:8px; background-color:#ccc; bottom:0;
+    position:absolute; 
+    width:100%; 
+    height:8px; 
+    background-color:#ccc; 
+    bottom:0;
   }
+  
   #humans .human .blood_via{
-    position:absolute; height:8px; background-color:#b51e23; width:0; bottom:0; transition:width 1s;
+    position:absolute; 
+    height:8px; 
+    background-color:#b51e23; 
+    width:0; 
+    bottom:0; 
+    transition:width 1s;
   }
-  #humans .human.left{ display:grid; justify-content:left; align-content:center; }
-  #humans .human.left .blood_via{ right:0; }
-  #humans .human.left .scribble{ left:-30px; }
-  #humans .human.left .scribble span{ left:-40px; text-align:right; }
-  #humans .human.right{ display:grid; justify-content:right; align-content:center; }
-  #humans .human.right .scribble{ right:-60px; }
-  #humans .human.right .scribble span{ right:-10px; }
+  
+  #humans .human.left{ 
+    display:grid; 
+    justify-content:left; 
+    align-content:center; 
+  }
+  
+  #humans .human.left .blood_via{ 
+    right:0; 
+  }
+  
+  #humans .human.left .scribble{ 
+    left:-30px; 
+  }
+  
+  #humans .human.left .scribble span{ 
+    left:-40px; 
+    text-align:right; 
+  }
+  
+  #humans .human.right{ 
+    display:grid; 
+    justify-content:right; 
+    align-content:center; 
+  }
+  
+  #humans .human.right .scribble{ 
+    right:-60px; 
+  }
+  
+  #humans .human.right .scribble span{ 
+    right:-10px; 
+  }
 
-  #humans .human .scribble{ position:absolute; height:50px; width:50px; top:0; transition:background 1s; }
-  #humans .human .scribble span{ position:absolute; display:grid; align-items:end; height:100%; }
+  #humans .human .scribble{ 
+    position:absolute; 
+    height:50px; 
+    width:50px; 
+    top:0; 
+    transition:background 1s; 
+  }
+  
+  #humans .human .scribble span{ 
+    position:absolute; 
+    display:grid; 
+    align-items:end; 
+    height:100%; 
+    color: hsl(var(--bc));
+  }
+  
   #humans .human .scribble .head{
-    width:30%; height:30%; background-color:#666; border-radius:50%;
-    margin:2px auto; transition:background 1s; position:absolute; top:30%; left:5%;
+    width:30%; 
+    height:30%; 
+    background-color:#666; 
+    border-radius:50%;
+    margin:2px auto; 
+    transition:background 1s; 
+    position:absolute; 
+    top:30%; 
+    left:5%;
   }
+  
   #humans .human .scribble .body{
-    position:absolute; bottom:0; width:40%; height:30%; background-color:#666;
-    border-radius:50% 50% 0 0; margin:0 auto; transition:background 1s;
+    position:absolute; 
+    bottom:0; 
+    width:40%; 
+    height:30%; 
+    background-color:#666;
+    border-radius:50% 50% 0 0; 
+    margin:0 auto; 
+    transition:background 1s;
   }
-  .highlight{ border:2px solid #b51e23 !important; font-weight:bold; }
-  .highlightText{ font-weight:bold; }
+  
+  .highlight{ 
+    border:2px solid #b51e23 !important; 
+    font-weight:bold; 
+  }
+  
+  .highlightText{ 
+    font-weight:bold; 
+    color: #b51e23 !important; 
+  }
 
   @media only screen and (max-width: 700px){
-    #content { width: 360px; height: 520px; margin: 20px auto; }
-    #blood_selector { width: 170px; height: 85px; font-size: .85em; }
-    .main_bag { left: 145px; }
-    #center_via_c .center_via { left: 187px; }
-    #humans { left: 55px; width: 250px; }
+    #content { 
+      width: 360px; 
+      height: 520px; 
+      margin: 20px auto; 
+    }
+    
+    #blood_selector { 
+      width: 170px; 
+      height: 85px; 
+      font-size: .85em; 
+    }
+    
+    .main_bag { 
+      left: 145px; 
+    }
+    
+    #center_via_c .center_via { 
+      left: 187px; 
+    }
+    
+    #humans { 
+      left: 55px; 
+      width: 250px; 
+    }
   }
 
   @media only screen and (max-width: 400px){
-    #content { width:300px; height:460px; }
-    #blood_selector { width:150px; height:75px; font-size:.75em; }
-    .main_bag { width:75px; height:105px; left:125px; }
-    .main_bag::before { top:-108px; height:100px; }
-    #center_via_c .center_via { left:167px; top:240px; }
-    #humans { top:240px; width:180px; left:85px; }
-    .resetBtn { top:135px; }
+    #content { 
+      width:300px; 
+      height:460px; 
+    }
+    
+    #blood_selector { 
+      width:150px; 
+      height:75px; 
+      font-size:.75em; 
+    }
+    
+    .main_bag { 
+      width:75px; 
+      height:105px; 
+      left:125px; 
+    }
+    
+    .main_bag::before { 
+      top:-108px; 
+      height:100px; 
+    }
+    
+    #center_via_c .center_via { 
+      left:167px; 
+      top:240px; 
+    }
+    
+    #humans { 
+      top:240px; 
+      width:180px; 
+      left:85px; 
+    }
+    
+    .resetBtn { 
+      top:135px; 
+    }
   }
 `;

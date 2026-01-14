@@ -8,6 +8,9 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import BloodCompatibilityViz from "../../components/Uicomponent/BloodCompatibilityViz";
+import TeamMembers from "../../components/Uicomponent/TeamMembers";
+import ImpactStories from "../../components/Uicomponent/ImpactStories";
+import FAQs from "../../components/Uicomponent/FAQs";
 
 const slides = [
   {
@@ -64,12 +67,12 @@ const stats = [
 
 export default function About() {
   return (
-    <div className="bg-white">
+    <div className="bg-base-100">
       {/* ===== Swiper Banner ===== */}
       <section className="relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-rose-50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-          <div className="rounded-3xl border bg-white/80 backdrop-blur shadow-sm overflow-hidden">
+          <div className="rounded-3xl border border-base-300 bg-base-100/80 backdrop-blur shadow-sm overflow-hidden">
             <Swiper
               modules={[Autoplay, Pagination, Navigation]}
               autoplay={{ delay: 3500, disableOnInteraction: false }}
@@ -83,16 +86,16 @@ export default function About() {
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 sm:p-10">
                     {/* Text */}
                     <div className="lg:col-span-7 flex flex-col justify-center">
-                      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                         {s.badge}
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                       </div>
 
-                      <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
+                      <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-base-content leading-tight">
                         {s.title}
                       </h1>
 
-                      <p className="mt-3 text-sm sm:text-base text-slate-600 leading-relaxed max-w-xl">
+                      <p className="mt-3 text-sm sm:text-base text-base-content/70 leading-relaxed max-w-xl">
                         {s.desc}
                       </p>
 
@@ -105,7 +108,7 @@ export default function About() {
                         </Link>
                         <Link
                           to={s.cta2.to}
-                          className="btn btn-outline rounded-xl"
+                          className="btn btn-outline btn-primary rounded-xl"
                         >
                           {s.cta2.text}
                         </Link>
@@ -116,12 +119,12 @@ export default function About() {
                         {stats.map((st, i) => (
                           <div
                             key={i}
-                            className="rounded-2xl border bg-white p-4 text-center shadow-sm"
+                            className="rounded-2xl border border-base-300 bg-base-100 p-4 text-center shadow-sm"
                           >
-                            <p className="text-lg sm:text-xl font-extrabold text-slate-900">
+                            <p className="text-lg sm:text-xl font-extrabold text-base-content">
                               {st.value}
                             </p>
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-base-content/70">
                               {st.label}
                             </p>
                           </div>
@@ -131,17 +134,17 @@ export default function About() {
 
                     {/* Visual card */}
                     <div className="lg:col-span-5">
-                      <div className="h-full rounded-3xl bg-gradient-to-br from-red-600 to-rose-500 p-6 sm:p-8 text-white shadow-sm relative overflow-hidden">
-                        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
-                        <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+                      <div className="h-full rounded-3xl bg-gradient-to-br from-primary to-secondary p-6 sm:p-8 text-primary-content shadow-sm relative overflow-hidden">
+                        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-base-100/15 blur-2xl" />
+                        <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-base-100/10 blur-2xl" />
 
-                        <p className="text-sm font-semibold text-white/90">
+                        <p className="text-sm font-semibold text-primary-content/90">
                           Why blood donation matters
                         </p>
                         <h3 className="mt-2 text-2xl font-extrabold">
                           One donation can save up to 3 lives
                         </h3>
-                        <p className="mt-3 text-sm text-white/90 leading-relaxed">
+                        <p className="mt-3 text-sm text-primary-content/90 leading-relaxed">
                           Our goal is to reduce delays during emergencies by
                           making donors easy to discover and requests easy to
                           track.
@@ -156,19 +159,19 @@ export default function About() {
                           ].map((b, i) => (
                             <div
                               key={i}
-                              className="rounded-2xl bg-white/10 border border-white/15 p-3"
+                              className="rounded-2xl bg-base-100/10 border border-base-100/15 p-3"
                             >
                               <p className="text-sm font-bold">{b.t}</p>
-                              <p className="text-xs text-white/85 mt-1">
+                              <p className="text-xs text-primary-content/85 mt-1">
                                 {b.d}
                               </p>
                             </div>
                           ))}
                         </div>
 
-                        <div className="mt-6 rounded-2xl bg-white/10 border border-white/15 p-4">
-                          <p className="text-xs text-white/85">
-                            Tip: If you’re a volunteer, you can manage donation
+                        <div className="mt-6 rounded-2xl bg-base-100/10 border border-base-100/15 p-4">
+                          <p className="text-xs text-primary-content/85">
+                            Tip: If you're a volunteer, you can manage donation
                             status updates from the dashboard.
                           </p>
                         </div>
@@ -182,56 +185,49 @@ export default function About() {
         </div>
       </section>
 
-<section className="py-12 sm:py-16 bg-white">
-  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-      <div>
-        <p className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
-          Blood Compatibility
-          <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
-        </p>
-        <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900">
-          Check who can receive your blood
-        </h2>
-        <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
-          Select a donor type to see compatible recipients with a simple animated visualization.
-        </p>
-      </div>
-    </div>
+      {/* ===== Blood Compatibility Section ===== */}
+      <section className="py-12 sm:py-16 bg-base-100">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                Blood Compatibility
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              </div>
+              <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-base-content">
+                Check who can receive your blood
+              </h2>
+              <p className="mt-2 text-sm sm:text-base text-base-content/70 max-w-2xl">
+                Select a donor type to see compatible recipients with a simple animated visualization.
+              </p>
+            </div>
+          </div>
 
-    <div className="mt-8">
-      <BloodCompatibilityViz/>
-    </div>
-  </div>
-</section>
-
-
-
-
-
-
-
-
+          <div className="mt-8">
+            <BloodCompatibilityViz />
+          </div>
+        </div>
+      </section>
 
       {/* ===== Feature Section ===== */}
-      <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-red-50">
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-base-100 to-base-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
-                Our Features <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
-              </p>
-              <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                Our Features <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              </div>
+              <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-base-content">
                 Built for speed, trust & impact
               </h2>
-              <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
+              <p className="mt-2 text-sm sm:text-base text-base-content/70 max-w-2xl">
                 We focus on a smooth user experience with strong role-based
                 control so donors, volunteers, and admins can work together.
               </p>
             </div>
 
-            <div className="flex gap-2">
-              <Link to="/donation-requests" className="btn btn-outline rounded-xl">
+            <div className="flex flex-wrap gap-2">
+              <Link to="/donation-requests" className="btn btn-outline btn-primary rounded-xl">
                 View Requests
               </Link>
               <Link to="/dashboard" className="btn btn-primary rounded-xl">
@@ -244,26 +240,26 @@ export default function About() {
             {features.map((f, i) => (
               <div
                 key={i}
-                className="group rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                className="group rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 duration-300"
               >
                 <div className="flex items-start justify-between">
-                  <div className="h-12 w-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-2xl">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl">
                     {f.icon}
                   </div>
-                  <span className="text-xs font-semibold rounded-full border bg-slate-50 px-3 py-1 text-slate-600">
+                  <span className="text-xs font-semibold rounded-full border border-base-300 bg-base-200 px-3 py-1 text-base-content/70">
                     Feature
                   </span>
                 </div>
 
-                <h3 className="mt-4 text-lg font-bold text-slate-900 group-hover:text-red-700">
+                <h3 className="mt-4 text-lg font-bold text-base-content group-hover:text-primary transition-colors">
                   {f.title}
                 </h3>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                <p className="mt-2 text-sm text-base-content/70 leading-relaxed">
                   {f.desc}
                 </p>
 
-                <div className="mt-4 text-sm font-semibold text-red-700">
-                  Learn more <span className="inline-block transition group-hover:translate-x-1">→</span>
+                <div className="mt-4 text-sm font-semibold text-primary group-hover:text-primary-focus transition-colors">
+                  Learn more <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
                 </div>
               </div>
             ))}
@@ -272,14 +268,14 @@ export default function About() {
       </section>
 
       {/* ===== Mission / Story ===== */}
-      <section className="py-12 sm:py-16 bg-white">
+      <section className="py-12 sm:py-16 bg-base-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-6">
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-base-content">
                 Our Mission
               </h3>
-              <p className="mt-3 text-slate-600 leading-relaxed">
+              <p className="mt-3 text-base-content/80 leading-relaxed">
                 We aim to build a reliable bridge between people who need blood
                 and donors who can help. With verified users, request tracking,
                 and location-based search, we reduce response time in emergencies.
@@ -304,17 +300,17 @@ export default function About() {
                     d: "Role-based permissions for safety.",
                   },
                 ].map((x, i) => (
-                  <div key={i} className="rounded-2xl border bg-white p-5 shadow-sm">
-                    <p className="font-bold text-slate-900">{x.t}</p>
-                    <p className="mt-1 text-sm text-slate-600">{x.d}</p>
+                  <div key={i} className="rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <p className="font-bold text-base-content">{x.t}</p>
+                    <p className="mt-1 text-sm text-base-content/70">{x.d}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="lg:col-span-6">
-              <div className="rounded-3xl border bg-gradient-to-br from-red-50 via-white to-rose-50 p-6 sm:p-10 shadow-sm">
-                <h4 className="text-xl font-extrabold text-slate-900">
+              <div className="rounded-3xl border border-base-300 bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 p-6 sm:p-10 shadow-sm">
+                <h4 className="text-xl font-extrabold text-base-content">
                   How it works
                 </h4>
 
@@ -338,12 +334,12 @@ export default function About() {
                     },
                   ].map((s, i) => (
                     <li key={i} className="flex gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold">
+                      <div className="h-9 w-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold">
                         {i + 1}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900">{s.t}</p>
-                        <p className="text-sm text-slate-600">{s.d}</p>
+                        <p className="font-bold text-base-content">{s.t}</p>
+                        <p className="text-sm text-base-content/70">{s.d}</p>
                       </div>
                     </li>
                   ))}
@@ -353,7 +349,7 @@ export default function About() {
                   <Link to="/regester" className="btn btn-primary rounded-xl">
                     Become a Donor
                   </Link>
-                  <Link to="/donation-requests" className="btn btn-outline rounded-xl">
+                  <Link to="/donation-requests" className="btn btn-outline btn-primary rounded-xl">
                     View Requests
                   </Link>
                 </div>
@@ -362,6 +358,9 @@ export default function About() {
           </div>
         </div>
       </section>
+      <TeamMembers></TeamMembers>
+      <ImpactStories></ImpactStories>
+      <FAQs></FAQs>
     </div>
   );
 }

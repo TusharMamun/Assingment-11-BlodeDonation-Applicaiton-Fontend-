@@ -35,6 +35,8 @@ import PrivateVolunteerRoute from "./PrivateVolunteerRoute";
 import Login from "../Authcomponents/LogingPage/Loging";
 import AnalysysDonationRequest from "../Pages/DashbordPages/AnalysysDonationRequest";
 import PaymentCancel from "../Pages/Funding/PaymentCancel";
+import Campaigns from "../Pages/CampainPage/Campain";
+import BloodBank from "../Pages/BloodBankPage/BloodBank";
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +47,16 @@ export const router = createBrowserRouter([
       { index: true, element: <Home /> },
 
       { path: "/about", element: <About /> },
+        {
+        path:"/campaigns",
+        element:<Campaigns></Campaigns>
+    
+      },
+        {
+        path:"/blood-banks",
+        element:<BloodBank></BloodBank>
+    
+      },
 
       // public list page (pending requests)
       { path: "/donation-requests", element: <DonationRequest /> },
@@ -79,6 +91,7 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+    
 
       // ✅ payment success should be private
       {

@@ -86,30 +86,31 @@ const HomeFeature = () => {
   ];
 
   return (
-    <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-red-50">
+    <section className="py-12 sm:py-16 bg-gradient-to-b from-base-100 to-primary/5 rounded-xl my-4">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               Featured
-              <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               Blood Donation Platform
-            </p>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-slate-900">
+            </div>
+            <h2 className="mt-3 text-2xl sm:text-3xl font-extrabold text-base-content">
               Built to save lives faster
             </h2>
-            <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
+            <p className="mt-2 text-sm sm:text-base text-base-content/70 max-w-2xl">
               Find donors, create requests, track donation status, and support the
               community — all in one place.
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link to="/regester" className="btn btn-primary rounded-xl">
               Join as Donor
             </Link>
-            <Link to="/search-donors" className="btn btn-outline rounded-xl">
+            <Link to="/search-donors" className="btn btn-outline btn-primary rounded-xl">
               Search Donors
             </Link>
           </div>
@@ -121,28 +122,28 @@ const HomeFeature = () => {
             <Link
               key={idx}
               to={it.to}
-              className="group rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+              className="group rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 duration-300"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-red-50 text-red-700 flex items-center justify-center border border-red-100 transition group-hover:bg-red-600 group-hover:text-white">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 transition-all group-hover:bg-primary group-hover:text-primary-content group-hover:border-primary">
                   {it.icon}
                 </div>
 
-                <span className="text-xs font-semibold rounded-full border bg-slate-50 px-3 py-1 text-slate-600">
+                <span className="text-xs font-semibold rounded-full border border-base-300 bg-base-200 px-3 py-1 text-base-content/70">
                   {it.tag}
                 </span>
               </div>
 
-              <h3 className="mt-4 text-lg font-bold text-slate-900 group-hover:text-red-700">
+              <h3 className="mt-4 text-lg font-bold text-base-content group-hover:text-primary transition-colors">
                 {it.title}
               </h3>
-              <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              <p className="mt-2 text-sm text-base-content/70 leading-relaxed">
                 {it.desc}
               </p>
 
-              <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-red-700">
+              <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-primary group-hover:text-primary-focus">
                 Explore{" "}
-                <span className="transition-transform group-hover:translate-x-1">
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
                   →
                 </span>
               </div>
@@ -157,9 +158,9 @@ const HomeFeature = () => {
             { t: "Role Based Access", d: "Donor • Volunteer • Admin" },
             { t: "Fast & Responsive", d: "Optimized for mobile + desktop" },
           ].map((b, i) => (
-            <div key={i} className="rounded-2xl border bg-white p-5 shadow-sm">
-              <p className="font-bold text-slate-900">{b.t}</p>
-              <p className="mt-1 text-sm text-slate-600">{b.d}</p>
+            <div key={i} className="rounded-2xl border border-base-300 bg-base-100 p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <p className="font-bold text-base-content">{b.t}</p>
+              <p className="mt-1 text-sm text-base-content/70">{b.d}</p>
             </div>
           ))}
         </div>
